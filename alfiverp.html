@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WL Pohovor</title>
+<style>
+:root{
+  --bg:#0b0e11; --panel:#12161b; --panel2:#171c22; --border:#252c34;
+  --text:#e6ebf1; --muted:#8a96a3; --accent:#3ad0a0; --accent2:#e0b23a;
+  --bad:#e05a5a; --ok:#3ad0a0; --neutral:#3b4652;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f6f8; --panel:#ffffff; --panel2:#eef1f4; --border:#dde3e9;
+    --text:#1a2027; --muted:#5b6470; --neutral:#c7ced6;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f4f6f8; --panel:#ffffff; --panel2:#eef1f4; --border:#dde3e9;
+  --text:#1a2027; --muted:#5b6470; --neutral:#c7ced6;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;padding-bottom:110px;}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--border);padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+header h1{font-size:16px;margin:0;letter-spacing:.5px;color:var(--accent);font-family:monospace;text-transform:uppercase;}
+.tabs{display:flex;gap:6px;}
+.tab{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px;cursor:pointer;}
+.tab.active{background:var(--accent);color:#08110d;border-color:var(--accent);font-weight:600;}
+main{max-width:820px;margin:0 auto;padding:16px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+input[type=text]{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;flex:1;min-width:160px;}
+details.section{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+details.section>summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:600;color:var(--accent2);display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+details.section>summary::-webkit-details-marker{display:none;}
+.badge{font-size:11px;color:var(--muted);font-weight:400;}
+.item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.item .code{font-family:monospace;color:var(--muted);font-size:12px;width:44px;flex-shrink:0;}
+.item .label{flex:1;min-width:140px;font-size:13.5px;}
+.seg{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;}
+.seg button{border:none;background:var(--panel2);color:var(--muted);padding:5px 10px;font-size:12px;cursor:pointer;}
+.seg button.on-ok{background:var(--ok);color:#08110d;}
+.seg button.on-bad{background:var(--bad);color:#1a0505;}
+.item input.note{background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;width:140px;}
+.sit{padding:12px 16px;border-top:1px solid var(--border);}
+.sit .q{font-size:13.5px;margin-bottom:6px;}
+.sit .ref{color:var(--muted);font-size:11px;font-family:monospace;}
+.item .ref{color:var(--muted);font-size:11px;font-family:monospace;margin-left:2px;}
+footer.bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:14px;z-index:20;}
+.scorewrap{flex:1;}
+.scorebar{height:8px;border-radius:4px;background:var(--neutral);overflow:hidden;margin-top:4px;}
+.scorefill{height:100%;background:var(--accent);transition:width .2s;}
+.scoretext{font-size:12px;color:var(--muted);}
+.verdict{font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;white-space:nowrap;}
+.v-ok{background:rgba(58,208,160,.15);color:var(--ok);}
+.v-mid{background:rgba(224,178,58,.15);color:var(--accent2);}
+.v-bad{background:rgba(224,90,90,.15);color:var(--bad);}
+.v-none{background:var(--neutral);color:var(--muted);}
+button.primary{background:var(--accent);color:#08110d;border:none;border-radius:8px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+button.primary:disabled{opacity:.4;}
+.hist-item{padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;}
+.hist-item:first-child{border-top:none;}
+.hist-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.hist-detail{display:none;padding-top:8px;font-size:13px;color:var(--muted);}
+.hist-detail.open{display:block;}
+.hist-detail .bad-row{color:var(--bad);margin:3px 0;}
+.small{font-size:11px;color:var(--muted);}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px;}
+.violation{display:block;color:var(--bad);font-size:11px;font-weight:600;margin-top:2px;}
+.report-card h3{margin:0 0 10px;font-size:14px;color:var(--accent2);}
+.report-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.report-grid input[type=text],.report-grid input[type=number]{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;flex:1;min-width:120px;}
+.pickrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.pickrow .lbl{font-size:12px;color:var(--muted);min-width:90px;}
+.pickseg{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.pickseg button{border:none;background:var(--panel2);color:var(--muted);padding:6px 12px;font-size:12px;cursor:pointer;border-right:1px solid var(--border);}
+.pickseg button:last-child{border-right:none;}
+.pickseg button.active{background:var(--accent);color:#08110d;font-weight:600;}
+.pickseg button.active.v-bad-btn{background:var(--bad);color:#1a0505;}
+.pickseg button:disabled{opacity:.35;cursor:not-allowed;}
+.blrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.blrow label{font-size:13px;cursor:pointer;}
+.reportout{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:13px;word-break:break-word;margin-bottom:10px;white-space:pre-wrap;}
+.copybtn{background:var(--neutral);color:var(--text);border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600;}
+.copybtn.done{background:var(--ok);color:#08110d;}
+.warnbar{padding:10px 14px;border-radius:10px;margin-bottom:14px;font-weight:700;font-size:13px;text-align:center;}
+.warn2{background:rgba(224,178,58,.15);color:var(--accent2);border:1px solid var(--accent2);}
+.warn3{background:rgba(224,90,90,.18);color:var(--bad);border:1px solid var(--bad);}
+#qwrap.locked .seg button{pointer-events:none;opacity:.5;}
+#qwrap.locked input.note{pointer-events:none;opacity:.5;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--panel);border:2px solid var(--bad);border-radius:14px;max-width:480px;width:100%;padding:22px 22px 18px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+.modal-box h2{margin:0 0 4px;color:var(--bad);font-size:19px;letter-spacing:.3px;}
+.modal-box .sub{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+.modal-wronglist{max-height:260px;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:16px;}
+.modal-wronglist .wrow{color:var(--bad);font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);}
+.modal-wronglist .wrow:last-child{border-bottom:none;}
+.modal-none{color:var(--muted);font-size:13px;padding:4px 0;}
+.modal-box button.primary{width:100%;}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ WL Pohovor</h1>
+  <div class="tabs">
+    <button class="tab active" data-tab="new">Nový pohovor</button>
+    <button class="tab" data-tab="hist">Historie</button>
+  </div>
+</header>
+<main id="main"></main>
+<footer class="bar" id="bar" style="display:none">
+  <div class="scorewrap">
+    <span class="scoretext" id="scoretext">0 / 0 zodpovězeno</span>
+    <div class="scorebar"><div class="scorefill" id="scorefill" style="width:0%"></div></div>
+  </div>
+  <span class="verdict v-none" id="verdict">—</span>
+  <button class="primary" id="saveBtn">Uložit pohovor</button>
+</footer>
+
+<script>
+const SECTIONS = [
+["1. Pojmy",[
+["1.1", "OOC vs IC", "Vysvětli, co znamená OOC a čím se liší od IC komunikace.", "OOC (Out Of Character) je komunikace a jednání mimo herní roli, mezi hráči jako reálnými lidmi – na rozdíl od IC, což je jednání přímo v roli postavy v herním světě."],
+["1.2", "IC", "Co znamená zkratka IC a jak se liší od OOC komunikace?", "IC (In Character) je jednání a komunikace probíhající přímo v roli postavy v herním světě, na rozdíl od OOC komunikace mezi hráči jako reálnými lidmi."],
+["1.3", "/ME – použití", "K čemu slouží příkaz /me a co v něm nesmí být obsaženo?", "/me popisuje činnosti, emoce nebo animace, které nejdou ve hře přímo provést (např. /me otevírá okno). Nesmí obsahovat myšlenky postavy."],
+["1.4", "/DO – použití", "K čemu slouží příkaz /do a jaká jsou pro něj pravidla?", "/do popisuje stav, okolnosti nebo výsledek situace. Musí být pravdivý, může se týkat jen vlastní postavy nebo okolí a nesmí obsahovat myšlenky."],
+["1.5", "/TRY – použití a omezení", "Hráč chce použít /try na to, jestli jsou dveře zamčené, ale je úplně sám bez dalšího hráče poblíž. Je to v pořádku?", "Ne. /try se používá jen k náhodnému vyhodnocení ANO/NE v přítomnosti dalšího hráče – nelze ho použít bez interakce (passive RP) ani na zranění bez přítomnosti hráče."],
+["1.6", "/STAV – použití", "K čemu slouží příkaz /stav a co v něm nesmí být obsaženo?", "/stav nastavuje fyzický stav postavy (např. má obvázané koleno). Nesmí popisovat myšlenky ani náladu postavy."],
+["1.7", "KOS", "Hráč bez jakéhokoliv předchozího RP rovnou zastřelí jinou postavu. Je to povolené?", "Ne, pokud pro to není jasný, opodstatněný a doložitelný důvod z předchozího RP – jde o KOS (okamžité usmrcení bez interakce), které je jinak zakázáno."],
+["1.8", "NVL", "Co znamená zkratka NVL a na co všechno se vztahuje?", "NVL znamená nevážení si vlastního života – vztahuje se nejen na samotný život postavy, ale i na její práci, vozidlo a další cenné věci."],
+["1.9", "Mixing OOC/IC", "Hráč ti během RP napíše narážku typu „stejně to admin vyřeší“. O co jde?", "Jde o Mixing – zakázané míchání OOC informací nebo narážek na administraci/systém do IC či OOC herní komunikace."],
+["1.10", "MetaGaming / Revers-Meta", "Hráč se dozví informaci mimo hru (např. na Discordu) a rovnou ji použije ve svém IC jednání. O co jde a existuje i opačná varianta?", "Jde o MetaGaming – použití OOC informací v IC jednání. Opačnou variantou je Revers-Meta, kdy hráč zpětně podsouvá OOC znalosti do RP například přes /do."],
+["1.11", "FailRP", "Jak bys obecně popsal pojem FailRP?", "FailRP je všeobecné označení pro porušení pravidel nebo nekvalitní roleplay, které neodpovídá standardům serveru."],
+["1.12", "PowerGaming", "Hráč jednou akcí znehybní a spoutá tři policisty najednou bez jakékoliv reálné šance na odpor. O jaké porušení jde?", "Jde o PowerGaming – provádění nerealistických akcí, které by v reálném životě nebyly možné."],
+["1.13", "NonRP Driving", "Hráč jezdí terénním vozem po střechách budov a naráží bez jakéhokoliv poškození. Je to v pořádku?", "Ne, jde o NonRP Driving – nerealistickou jízdu neodpovídající vozidlu, terénu ani situaci. Posuzuje ji admin team a v nejasných případech je vhodné se předem zeptat."],
+["1.14", "NonRP Injuries", "Postava dostane zásah ze střelné zbraně a hráč to odehraje jako pouhé škrábnutí. Je to správně?", "Ne, jde o NonRP Injuries – nerealistické nebo nedostatečné zahrání zranění je zakázáno, např. vydávání střelného zranění za škrábnutí."],
+["1.15", "AssPulling", "Hráč bez jakéhokoliv RP vytáhne z kapsy velkou bednu s výbavou. O co jde?", "Jde o AssPulling – vytahování velkých předmětů z inventáře či animací bez odpovídajícího RP (netýká se dlouhých zbraní)."],
+["1.16", "PassiveRP / 911 hlášení", "Pachatel loupeže na rušné ulici nijak neřeší okolí ani riziko dopadení. Co porušuje?", "Porušuje PassiveRP – svět není liduprázdný, hráč musí zvážit riziko dané lokace, hrát reálný strach (FearRP) a u nelegální akce ji nahlásit policii (911/911a)."],
+["1.17", "Combat Log", "Hráč se uprostřed přestřelky, které se aktivně účastní, odpojí ze serveru, aby unikl následkům. O co jde?", "Jde o Combat Log – úmyslné nebo neodůvodněné odpojení během RP situace, které je zakázané minimálně 15 minut po zahájení akce."],
+["1.18", "FearRP", "Postavě někdo míří zbraní a vyhrožuje, ale hráč to úplně ignoruje a dál normálně chodí. Co porušuje?", "Porušuje FearRP – povinnost hrát reálný strach o život, majetek nebo zaměstnání při ohrožení (např. JobFear, DogFear, GunFear)."],
+["1.19", "Hood Fear", "Hráč bez respektu vjede do jasně vyznačeného teritoria gangu a chová se tam nevhodně. Co riskuje?", "Riskuje konflikt kvůli porušení Hood Fear – nutnosti respektovat území gangů, kdy neobvyklé či nerespektující chování může vést ke konfliktu."],
+["1.20", "GrossRP", "Nelegální frakce chce v RP zahrát mučení zajatce. Za jakých podmínek je to možné?", "Jde o GrossRP (nechutné RP jako mučení, násilí apod.), které vyžaduje souhlas účastníků; u nelegálních frakcí je automaticky schváleno, ale nesmí mít trvalé následky."],
+["1.21", "VDM", "Hráč bez jakéhokoliv důvodu úmyslně naboří autem do skupiny hráčů. O co jde?", "Jde o VDM – bezdůvodné bourání do aut a srážení hráčů nebo NPC vozidlem, které je zakázané."],
+["1.22", "VK", "Chceš nechat odebrat ze hry auto, které ti překáží u tvého domu, i když má platné doklady a RZ. Je to VK?", "Ne – VK (odebrání/odstranění vozidla ze hry) je oprávněné jen při neplatném VIN, chybějící RZ, nebo na základě rozhodnutí A-Teamu. Pouhá překážka není důvod."],
+]],
+["2. Základní pravidla",[
+["2.1", "Účel pravidel", "K čemu podle tebe pravidla serveru vlastně slouží?", "Účelem pravidel je udržet kvalitní a vyvážené RP prostředí s rovnými podmínkami pro všechny hráče."],
+["2.2", "Povinnost dodržovat", "Musí pravidla dodržovat úplně každý člen komunity, nebo jen někteří?", "Ano, každý člen komunity musí pravidla dodržovat a přispívat ke kvalitnímu RP."],
+["2.3", "Zneužívání/výklad pravidel", "Hráč se hájí tím, že pravidlo neznal, nebo si ho vyloží po svém a odkazuje se i na neexistující pravidlo. Je to omluva?", "Ne – zneužívání neznalosti pravidel nebo jejich účelový výklad, včetně odkazování na neexistující pravidla, je trestné."],
+["2.4", "Uvěřitelnost a konzistentnost RP", "Musí hráč svou postavou přesně simulovat reálný život, nebo jde o něco jiného?", "Nejde o přesnou simulaci reálného života, ale o důraz na uvěřitelné a konzistentní jednání postavy."],
+]],
+["3. Obecná pravidla",[
+["3.1", "Rozhodnutí A-Teamu jsou konečná", "Nesouhlasíš s rozhodnutím A-Teamu. Můžeš ho veřejně napadat a odmítat ho respektovat?", "Ne – rozhodnutí A-Teamu jsou konečná a závazná, diskutovat o nich lze jen slušně a konstruktivně."],
+["3.2", "Jeden účet / multiaccounting", "Kolik herních účtů smí mít jeden hráč na jeden autentizovaný Discord účet?", "Jen jeden – platí pravidlo jeden hráč = jeden herní účet na jeden autentizovaný Discord účet."],
+["3.3", "Ban a allowlist", "Hráč dostal ban. Kdo rozhoduje o tom, jestli mu zůstane, nebo se mu odebere allowlist?", "O zachování nebo odebrání allowlistu po banu rozhoduje individuálně řešící administrátor."],
+["3.4", "Odvolání proti banu", "Hráč chce podat odvolání proti banu. Jak a kdy to může udělat?", "Jen přes ticket – u běžného banu nejdříve po polovině trestu, u permabanu nejdříve po 180 dnech."],
+["3.5", "Kontakt AT jen přes ticket", "Chceš něco urgentně vyřešit s A-Teamem, tak mu napíšeš přímo do DM na Discordu nebo ve hře. Je to v pořádku?", "Ne – kontaktovat AT mimo ticket systém (DM na Discordu nebo ve hře) je zakázáno, vyjma situace, kdy si to AT sám vyžádá."],
+["3.6", "Pozastavení RP akce – jen admin", "Hráči se během probíhající RP akce sami rozhodnou akci přerušit, protože se jim nelíbí, jak se vyvíjí. Je to možné?", "Ne – pozastavit nebo ukončit RP akci smí jen člen A-Teamu, svévolné přerušení hráči je zakázáno."],
+["3.7", "Cheaty, bugy, 3rd party software", "Hráč zjistí bug, který mu dává herní výhodu, a začne ho aktivně využívat. Co mu hrozí, a jaký je rozdíl, pokud by šlo o cheat?", "Zneužívání cheatů, bugů, glitchů nebo cizího softwaru je zakázáno. U cheatů hrozí permaban bez možnosti unbanu."],
+["3.8", "Zákaz urážek úrovně RP/fotek", "Hráč druhému otevřeně nadává, že má trapné RP nebo ošklivé fotky postavy. Je to v pořádku?", "Ne – urážení nebo zesměšňování RP úrovně či fotek hráčů je zakázáno, případný problém se řeší přes ticket u A-Teamu."],
+]],
+["4. Komunikace",[
+["4.1", "OOC jen na Discordu", "Kde má probíhat veškerá mimoherní (OOC) komunikace mezi hráči?", "Výhradně na Discordu."],
+["4.2", "Tickety na webu", "Kde se podávají a řeší admin tickety?", "Jen přes ticket systém na oficiálním webu."],
+["4.3", "Spam zákaz", "Hráč opakovaně posílá stejnou nebo nerelevantní zprávu a zahlcuje tím kanál. Je to v pořádku?", "Ne – jde o zakázaný spam, tedy zahlcování kanálů a opakované posílání stejných/nerelevantních zpráv."],
+["4.4", "Dohled nad A-Teamem", "Máš podezření, že člen A-Teamu zneužívá své pravomoci. Co můžeš udělat?", "A-Team podléhá vedení serveru, takže podezření na zneužití pravomocí lze anonymně nahlásit přes k tomu určený ticket."],
+["4.5", "Nahrávání bez souhlasu", "Chceš nahrát rozhovor s jiným hráčem bez jeho souhlasu jako důkaz do ticketu. Je to výjimečně možné?", "Ano, ale pouze jako důkazní materiál pro řešení ticketu – jinak je nahrávání bez výslovného souhlasu všech zúčastněných přísně zakázáno."],
+["4.6", "Rušení VC", "Hráč pouští ve voice chatu hlasitou hudbu nebo používá voice changer bez souhlasu ostatních. Je to povolené?", "Ne – hudba, rušivé zvuky a voice changery ve VC bez souhlasu ostatních jsou zakázané."],
+["4.7", "Sdílení osobních údajů", "Hráč zveřejní fotku, adresu nebo kontakt jiného hráče bez jeho souhlasu. Je to v pořádku?", "Ne – zveřejňování osobních údajů třetích osob bez souhlasu je zakázáno."],
+["4.8", "Steam jméno = Discord jméno", "Hráčovo herní/Steam jméno vůbec neodpovídá jeho jménu na Discordu. Jaký to má následek?", "Herní identita musí odpovídat jménu na Discordu – v opačném případě hrozí kick, při opakování ban."],
+["4.9", "Zásah do trestů jiných", "Kamarád dostal trest a ty se snažíš přesvědčit admina, aby mu ho zrušil nebo zmírnil, aniž by tě k tomu AT vyzval. Je to v pořádku?", "Ne – zasahovat do trestů/blokací jiných hráčů nebo za ně lobbovat je zakázáno bez vyzvání A-Teamu."],
+["4.10", "Vydávání se za AT", "Hráč tvrdí ostatním, že je člen A-Teamu, i když není, a sdílí osobní informace o skutečných členech AT. Je to povolené?", "Ne – vydávat se za A-Team nebo šířit osobní informace o jeho členech je zakázáno."],
+["4.11", "Vulgarismy / obcházení filtrů", "Hráč používá sprostá slova, ale schválně je píše s hvězdičkami nebo zkratkami, aby obešel filtr. Je to v pořádku?", "Ne – vulgarismy jsou zakázány v jakémkoliv rozsahu, včetně obcházení filtrů pomocí hvězdiček, zkratek apod."],
+["4.12", "Urážky/vyhrožování", "Hráč v OOC chatu nebo mimo hru někomu vyhrožuje a uráží ho. Je to tolerováno?", "Ne – urážky a vyhrožování v OOC chatu i mimo hru jsou zakázané."],
+["4.13", "Odkazy na konkurenci / navádění", "Hráč posílá odkazy na konkurenční server a navádí ostatní ke krádeži nebo podvodu. Je to povolené?", "Ne – odkazy na konkurenční servery a navádění k podvodům, krádežím nebo nezákonnému obsahu jsou zakázány."],
+["4.14", "Ticket systém pro AT", "Kde se má řešit veškerá oficiální komunikace, dotazy a hlášení směrem k A-Teamu?", "Jen přes ticket systém."],
+["4.15", "Frakční Discordy – diskrétnost AT", "Kolik členů A-Teamu smí být na frakčním Discordu a je tam nějaké omezení?", "Počet členů A-Teamu na frakčním Discordu není omezen, ale nikdy tam nesmí být člen konkurenční frakce – je vyžadována diskrétnost."],
+["4.16", "Diskriminace / nenávistné projevy", "Hráč se v IC hájí tím, že rasistický nebo homofobní projev byl „jen roleplay“. Je to omluva?", "Ne – rasistické, xenofobní a homofobní projevy jsou zakázány jak v IC, tak v OOC, a roleplay je neomlouvá."],
+]],
+["5. Multichar",[
+["5.1", "Identifikace jen hlasem zakázána", "Postava pozná jinou postavu jen podle hlasu, aniž by ji viděla nebo měla jiný důkaz. Je to platná identifikace?", "Ne – rozpoznání osoby vyžaduje vizuální nebo herní důkaz (tvář, tetování, doklady), samotný hlas nestačí."],
+["5.2", "Více postav v jedné frakci", "Hráč chce mít za sebe dvě různé postavy v téže frakci. Je to možné?", "Ne – jeden hráč nemůže mít za sebe více postav v téže frakci."],
+["5.3", "Legál + nelegál souběžně", "Hráč je ve vysoké hodnosti u policie a zároveň chce mít druhou postavu v nelegální frakci. Je to povolené?", "Ne – souběžné působení v legální a nelegální frakci je povolené jen na nižších hodnostech ve státní složce a druhá postava ve státní složce navíc vyžaduje schválení přes ticket."],
+["5.4", "Nezávislost postav / zákaz cross-info", "Hráčovy dvě postavy se navzájem „znají“ a pomáhají si nebo se za sebe mstí. Je to v pořádku?", "Ne – postavy jednoho hráče musí být herně nezávislé, nesmí se znát, kooperovat ani se za sebe mstít."],
+["5.5", "Jeden boss napříč postavami", "Hráč chce být šéfem hned ve dvou různých frakcích na dvou svých postavách. Je to možné?", "Ne – hráč smí být majitelem/šéfem jen v jedné frakci napříč všemi svými postavami."],
+["5.6", "Dětská postava/zvíře – souhlas AT", "Hráč se rozhodne bez ptaní hrát dětskou postavu nebo zvíře. Je to v pořádku?", "Ne – hraní dětské postavy nebo zvířete je povoleno jen po předchozím schválení A-Teamem."],
+["5.7", "Dvě nelegální frakce zakázáno", "Hráč chce být zároveň členem dvou různých nelegálních frakcí. Je to možné?", "Ne, členství ve dvou nelegálních frakcích současně je zakázáno, výjimka je možná jen přes ticket."],
+]],
+["6. Roleplay",[
+["6.1", "Vlastní zákoník serveru", "Podle čeho se na serveru posuzuje, co je legálně/kriminálně v pořádku?", "Server má vlastní zákoník, který slouží jako oficiální legislativní základ projektu."],
+["6.2", "Hlášení jen přes ticket", "Kde má hráč nahlásit stížnost nebo report na jiného hráče?", "Veškerá hlášení, stížnosti a reporty se řeší jen přes ticket systém na webu."],
+["6.3", "Co je v inventáři, to má hráč", "Je věc, kterou má postava v inventáři, považována za fyzicky vlastněnou?", "Ano – co má postava v inventáři, to fyzicky vlastní a má u sebe."],
+["6.4", "Garážování při útěku", "Hráč prchá před policií a v poslední chvíli zagáruje auto, aby ho ztratil. Je to v pořádku?", "Ne – během aktivního úniku je zakázáno garážovat auto; po ukončení útěku musí hráč navíc zůstat online minimálně 15 minut."],
+["6.5", "Zákaz N-slova / zakázaných slov", "Hráč použije N-slovo v chatu nebo hlasem, i jen jako „vtip“. Jaký postih hrozí?", "Přísně zakázáno – použití N-slova a dalších zakázaných slov v chatu i hlasem se trestá banem."],
+["6.6", "Zásah do vesty vs deadscreen", "Postava dostane zásah do neprůstřelné vesty, upadne do deadscreenu a pak chce dál hrát zranění jako lehké „jen do vesty“. Je to správně?", "Ne – do deadscreenu lze zásah do vesty hrát jako nefatální, ale po upadnutí do DS je zpětné vydávání zranění jen za zásah do vesty zakázané."],
+["6.7", "Rukojmí při vykrádání – limity", "Kolik rukojmí smíte mít uvnitř budovy a kolik venku při vykrádání?", "Uvnitř budovy neomezeně, venku maximálně 1 (jen pokud je další rukojmí uvnitř). NPC rukojmí je možné jen bez přítomnosti reálného hráče, maximálně 1."],
+["6.8", "Výkupné za rukojmí – limity", "Vezmeš rukojmí v bance a chceš za něj finanční výkupné. Je to možné, a jaké jsou obecně limity?", "V bance je jakékoliv finanční výkupné zakázáno. U obchodu je limit max. 10 000 $, u únosu osoby max. 20 000 $, a to max. jednou za 24 hodin na osobu/skupinu."],
+["6.9", "Safezony neexistují", "Existují na serveru nějaké safezony, kde se nesmí nic dít?", "Ne, na serveru žádné safezony nejsou."],
+["6.10", "PK jen v DS, pamatuje si detaily", "Kdy vzniká PK a kolik si postava po probuzení pamatuje?", "PK vzniká jen v deadscreenu. Postava si pamatuje jen drobné detaily, logické vyhodnocení situace je povinné."],
+["6.11", "Zákaz zneužití jízdy na zadním kole", "Hráč na motorce jede pořád na zadním kole, aby tak dosáhl vyšší rychlosti nebo zrychlení. Je to v pořádku?", "Ne – zneužívání jízdy na zadním kole motorky pro nerealistickou akceleraci nebo rychlost je zakázáno."],
+["6.12", "G signál v nelegálních lokacích", "Ve varně nebo pěstírně použiješ nouzový GPS signál/lokátor. Je to povolené?", "Ne – nouzové signály a GPS lokátor jsou v nelegálních lokacích, varnách a pěstírnách zakázané."],
+["6.13", "Zákaz DC panic buttonu", "Slyšel jsi o tzv. DC panic buttonu. Smí se používat?", "Ne, používání DC panic buttonu je zakázáno."],
+["6.14", "Raidy schvaluje A-Team", "Chcete jako frakce provést raid na jiné sídlo. Musíte to nejdřív někde schválit?", "Ano – jakýkoliv raid, ať nelegální nebo státní, musí předem schválit A-Team přes ticket."],
+["6.15", "Zákaz nejednoznačných /me a /do", "Hráč napíše /me tak nejasně, že vůbec není jasné, co postava dělá. Je to v pořádku?", "Ne – /me a /do, ze kterých není jasné, jaká činnost se přesně vykonává, jsou zakázané."],
+["6.16", "Střelba z vrtulníku jen nad oceánem", "Kde je povolená střelba z vrtulníku?", "Pouze nad oceánem v okolí ostrova."],
+["6.17", "Převlékací menu bez RP", "Hráč uprostřed ulice bez jakéhokoliv RP otevře převlékací menu a změní outfit. Je to v pořádku?", "Ne – používání převlékacího menu bez RP na místech, kde to nedává smysl, je zakázáno."],
+["6.18", "Dodržování loru postavy", "Postava má lékařský lor, ale hráč začne najednou využívat detailní znalosti z jiné profese, kterou nikdy nehrál. Je to v pořádku?", "Ne – hráč musí dodržovat výchozí lor postavy, jakákoliv změna zaměření musí mít logický vývoj, a zneužívání cizích profesních znalostí je zakázáno."],
+["6.19", "Únosy za účelem sběru drog", "Chceš unést hráče, abys z něj dostal drogy, a poté ho zavlečeš do interiéru bez jakéhokoliv příběhu. Je to povolené?", "Ne – bez výslovného OOC souhlasu je to zakázáno, a únosy do interiérů jsou možné jen s opodstatněným příběhem, ne nahodile."],
+["6.20", "Výbušniny – schválení A-Teamem", "Chceš v RP použít výbušniny nebo jimi vyhrožovat. Musíš to nejdřív s někým konzultovat?", "Ano – RP s výbušninami nebo vyhrožováním jimi musí být předem schváleno A-Teamem přes ticket."],
+["6.21", "Nošení frakčního oblečení bez RP", "Hráč nosí frakční vestu nebo uniformu, aniž by k tomu předtím proběhlo odpovídající RP. Je to v pořádku?", "Ne – nošení frakčního oblečení bez předchozího odpovídajícího RP je zakázáno."],
+["6.22", "Instrukce SAA k letovým zónám", "Pilot ignoruje instrukce SAA ohledně letových zón a výšek. Má to nějaký postih?", "Ano – nedodržení instrukcí SAA k letovým zónám a výškám se trestá."],
+["6.23", "Kamerové systémy", "Chceš si nainstalovat civilní kameru do svého bytu. Uzná se to jen tak?", "Ne – kamery se uznávají jen s fyzickým modelem. Státní vozidla mají dashcam automaticky, civilní kamera je uznaná jen po odRPené instalaci a musí být doložitelná v logu."],
+["6.24", "Cross-RP (opačné pohlaví)", "Hráč hraje postavu opačného pohlaví, než jaké má sám. Je to povolené, a co když ho za to někdo IC uráží?", "Ano, hraní opačného pohlaví je povolené. IC urážky na to jsou čistě IC záležitost, ale případný OOC přesah (urážky mimo roli) se tvrdě trestá."],
+["6.25", "Převod majetku po CK", "Tvoje postava dostala CK. Kolik majetku můžeš převést na novou postavu?", "Maximálně 50 % majetku, a to jen se schválením A-Teamu přes ticket."],
+["6.26", "Zneužívání animací a bindů", "Hráč si nabindoval emote/animaci a používá ji tak, aby si zajistil herní výhodu nebo obešel mechaniku. Je to v pořádku?", "Ne – zneužívání nabindovaných emotů a animací pro herní výhodu, bugování nebo obcházení mechanik je zakázáno."],
+["6.27", "Garáže – systém vlastnictví", "Kdo spravuje garáže a jsou údaje o vlastnictví veřejné?", "Garáže spravuje centrální vládní systém a údaje o vlastnictví jsou soukromé, dokud o nich nerozhodne soud."],
+["6.28", "Převlékání PEDu", "Kde je povolené převlékání postavy (PEDu)?", "Jen na logických místech, jako jsou šatny, domov nebo zázemí práce – nikdy uprostřed ulice nebo probíhající situace."],
+]],
+["7. Frakce",[
+["7.1", "Žádosti o frakce", "Chceš s kamarády založit frakci. Jaké jsou minimální požadavky a kudy se žádost podává?", "Žádost se podává přes ticket, je potřeba minimálně 5 členů a vzor obsahuje: název, majitele, členy, lore o minimálně 150 slovech, hierarchii, popis a sídlo."],
+["7.2", "Práva a povinnosti frakce", "Frakce dlouhodobě neplní žádné aktivity a nevyužívá své výhody. Co se s ní stane?", "Pokud frakce neplní aktivity a nevyužívá výhody, Management Frakcí ji zruší."],
+["7.3", "Frakční Discord", "Musí mít každá frakce svůj vlastní IC Discord a kdo tam má přístup?", "Ano, každá frakce má mít IC Discord s minimálně jedním adminem. Přístup na něj má kdokoliv z A-Teamu, kromě členů konkurenční frakce."],
+["7.4", "Frakční interiéry – zamčeno", "Ve frakčním interiéru není online žádný člen frakce. Má být otevřený, nebo zamčený?", "Frakční interiéry jsou zamčené, pokud není online žádný člen dané frakce."],
+["7.5", "Limit členů", "Jaký je maximální počet členů gangu bez schválení A-Teamu?", "Gang má limit 10 (+5), MC 15 (+5), kartel/mafie/syndicate 20+5 brigáda (+5), obecná nelegální skupina 10 (+5); nad tento limit je nutný ticket."],
+["7.6", "Spojenectví nelegálních frakcí", "Kolik spojenectví s jinými nelegálními organizacemi může mít frakce najednou?", "Maximálně jedno spojenectví, které musí být podložené dlouhodobým RP."],
+["7.7", "Raidy/vypálení budov", "Chcete v konfliktu vypálit sídlo nepřátelské frakce molotovem. Jaké podmínky pro to musí platit?", "Vypálení molotovem je možné jen na zjištěné sídlo v konfliktu, musí být přítomni jen ONLINE hráči a nutný je dohled nezainteresovaného A-Teamu."],
+["7.8", "Návrat do RP po oživení", "Postava se po smrti oživí v nemocnici. Může se rovnou vrátit do akce, ze které přišla?", "Ne – po oživení v nemocnici je zakázán návrat do probíhající akce, nejdřív je nutné odRPit zranění."],
+["7.9", "Únosy/zatčení – doby trvání", "Jak dlouho smí nelegální frakce, respektive státní složka, držet uneseného/zatčeného?", "Nelegální frakce max. 3 hodiny (s prodloužením až na 24 hodin), státní složky max. 6 hodin (výjimečně až 24 hodin)."],
+["7.10", "Uniformy státních složek", "Policista na směně nenosí předepsanou uniformu. Je to problém?", "Ano – nerespektování předepsaných uniforem státních složek se počítá jako FailRP."],
+["7.11", "Korupce státních složek", "Policista si tajně nechá u sebe nalezený kontraband bez jakéhokoliv schválení. Je to schválená korupce?", "Ne – korupce musí být vždy předem schválená přes ticket; přechovávání kontrabandu bez schválení je vždy neschválená korupce."],
+["7.12", "Snitching", "Zadržený u výslechu začne prozrazovat citlivé informace o nelegální činnosti třetí osoby (snitchuje). Co musí policista udělat?", "Snitching je povolen jen se schválením přes ticket (max. 2 postavy). Policista musí při odhalení okamžitě ověřit u A-Teamu, zda je schválený, jinak bude potrestán stejně jako neoprávněně snitchující hráč."],
+["7.13", "Útoky na nelegální sídla", "Chcete zaútočit na sídlo nelegální frakce mimo předem schválený raid, nebo si před ním jen provokativně vyfotit. Je to v pořádku?", "Ne – útoky mimo schválený raid jsou zakázané a provokativní focení před sídlem se počítá jako toxicita."],
+]],
+["8. Character Kill (CK)",[
+["8.1", "Obecné podmínky CK", "Co je potřeba k tomu, aby mohl být hráči udělen CK?", "Je potřeba závažný a prokazatelný IC důvod, hráč má navíc možnost odvolání k A-Teamu."],
+["8.2", "Žádost o CK", "Kdo schvaluje žádost o CK a co všechno musí obsahovat?", "Schvaluje ji jen A-Team na základě obsáhlé žádosti (důvod, jméno, důkazy); po schválení následuje zápis do LOOC."],
+["8.3", "Ztráta majetku při CK", "Tvoje postava dostala CK. Přijdeš o veškerý majetek, nebo ho můžeš někomu předat?", "Hráč přichází o veškerý majetek. Dědictví na jiného hráče je možné jen tehdy, pokud postava před smrtí prokazatelně sepsala úředně ověřenou závěť."],
+["8.4", "SelfCK", "Chceš své postavě udělit SelfCK. Co k tomu potřebuješ a jak musí být provedeno?", "SelfCK schvaluje A-Team a incident musí být kvalitně a řádně odehrán."],
+["8.5", "Frakční CK", "Lze udělit CK rovnou celé frakci najednou?", "Ne, CK nelze udělit na celou frakci."],
+["8.6", "Interní CK", "Kdo má u ILEGAL frakce automatické právo udělit interní CK a co je k tomu ještě potřeba?", "Interní CK se týká jen ILEGAL frakcí, kde boss nebo vybraní lidé mají automatické právo ho udělit. Vždy je nutný zápis do ticketu a hráč má právo na odvolání."],
+["8.7", "Jail CK", "Na čem závisí délka Jail CK a od kdy je nutný soud?", "Jail CK je vázán na délku trestu (0–11 měsíců = 1 minuta, 1 rok = 2 minuty), od 300 minut trestu je nutný soud."],
+["8.8", "Situační CK", "Za jakých podmínek platí Situační CK?", "Platí jen s dohledem A-Teamu přímo na místě, který ho musí schválit přesně v moment dané akce."],
+["8.9", "Návrat do stejné frakce po CK", "Kolik dní po CK se nesmíš vrátit do stejné frakce?", "14 dní."],
+["8.10", "Vstup do nelegální frakce po CK", "Kolik dní po CK nesmíš vstoupit do žádné nelegální frakce?", "14 dní."],
+["8.11", "Faction War CK", "Jaké typy Faction War CK existují?", "Dva typy – dlouhodobá válka (schvaluje se přes ticket) a druhá válka (řeší se situačně, s dohledem A-Teamu)."],
+]],
+["9. PVP pravidla",[
+["9.1", "Vyvolání RP s PD za účelem zabití", "Hráč záměrně vyvolá konflikt s policií jen proto, aby ji mohl zabít a olootovat její výbavu. Je to v pořádku?", "Ne – vědomé vyvolávání akce s PD kvůli zabití je zakázáno, stejně jako looting služební výbavy."],
+["9.2", "Náhodné hledání hráčů/sídel", "Hráč bezcílně jezdí po mapě a náhodně hledá jiné hráče nebo frakční sídla, aby na ně zaútočil. Je to povolené?", "Ne – náhodné hledání hráčů nebo frakčních sídel je zakázáno."],
+["9.3", "Raidování podniků", "Chceš raidovat podnik jen za účelem únosu nebo přestřelky uvnitř. Je to bez dalšího povolené?", "Ne, za tímto účelem je to zakázáno, lze o to ale požádat přes ticket."],
+["9.4", "Revive po PK unešeného", "Uneseného hráče dáš do DS/PK, a pak si pro něj sám zavoláš záchranku a necháš ho oživit. Je to v pořádku?", "Ne – po dání PK/DS unesenému si nelze zařídit vlastní ošetření a žádat revive."],
+["9.5", "PVP packy / 3rd party programy", "Hráč používá program, který mu ukazuje trasery výstřelů. Co mu za to hrozí, a co je naopak povolené?", "Programy měnící zásadní vlastnosti hry jsou zakázané (povolené jsou jen FPS boostery). Používání traceru se trestá warnem až permabanem."],
+["9.6", "Raid při oprávněném podezření", "Máte důkazy o oprávněném podezření a chcete kvůli tomu provést raid. Musíte na to čekat na schválení?", "Ne, takový raid je automaticky schválen, pokud máte důkazy oprávněnosti, ale je nutné ihned přivolat admina, aby akci sledoval."],
+["9.7", "Kempení na nelegálních lokacích", "Hráči čekají schovaní v křoví nebo za dveřmi varny, aby přepadli toho, kdo vyjde. Je to povolené?", "Ne – kempení na nelegálních lokacích (čekání za dveřmi varen, schovávání v křoví apod.) je zakázáno."],
+["9.8", "Frakční DC přes telefon", "Hráč se připojuje na frakční Discord přes telefon nebo cloudovou aplikaci. Je to v pořádku?", "Ne, je to přísně zakázáno."],
+["9.9", "Střelba bez RP důvodu", "Hráč začne střílet na jiného hráče, aniž by k tomu měl jakýkoliv RP důvod. Je to v pořádku?", "Ne – střelba bez adekvátního RP důvodu je zakázaná. Výjimkou je situace, kdy někdo narušuje probíhající akci (pak jde o porušení NVL)."],
+["9.10", "Motorky/čtyřkolky jako únik", "Chceš vykrást banku a jako hlavní únikové vozidlo použít motorku. Je to v pořádku?", "Ne – motorky a čtyřkolky nesmí být primárním únikovým vozidlem při vykrádání/fast contentu, mohou být jen sekundárním v rámci promyšleného plánu."],
+["9.11", "Nelegální činnost kolem restartu", "Kdy je zakázané zahajovat nelegální činnost kolem restartu serveru?", "10 minut před a 10 minut po restartu serveru."],
+["9.12", "Ochranné vesty bez propu", "Hráč má nasazenou plnou vestu, aniž by k ní měl odpovídající prop nebo smysluplnou situaci. Je to v pořádku?", "Ne – nošení nebo používání plné vesty bez odpovídajícího propu a smysluplné situace je zakázáno."],
+]],
+["10. Korupce",[
+["10.1", "Obecné zásady korupce", "Co musí splňovat jakákoliv korupce, aby byla v pořádku?", "Musí být předem schválená A-Teamem, sloužit prospěchu vlastní postavy a být zdokumentovaná."],
+["10.2", "SASP korupce – I. stupeň", "Jaké chování spadá pod I. stupeň korupce u SASP a od jaké hodnosti je možný?", "Přivírání očí u lehkých přestupků a braní úplatků, možné od hodnosti Trooper."],
+["10.3", "SASP korupce – II. stupeň", "Co přidává II. stupeň SASP korupce oproti I. stupni?", "Přidává prodej nebo výměnu informací o osobách, lokacích a plánech zásahů."],
+["10.4", "SASP korupce – III. stupeň", "Co přidává III. stupeň SASP korupce?", "Přidává omezené falšování a zatajování důkazů nebo dokumentů za úplatu."],
+["10.5", "SASP korupce – IV. stupeň", "Co obsahuje navíc nejvyšší, IV. stupeň SASP korupce?", "Propouštění členů dané nelegální frakce z CPZ bez záznamu a manipulaci s výslechy."],
+["10.6", "SAMS korupce – I. stupeň", "Jaké chování spadá pod I. stupeň korupce u SAMS a od jaké hodnosti je možný?", "Přehlížení fakturace pacientů a podpultový prodej léků, možné od hodnosti Paramedic."],
+["10.7", "SAMS korupce – II. stupeň", "Co přidává II. stupeň SAMS korupce?", "Prodej nebo výměnu informací o pacientech nebo případech."],
+["10.8", "SAMS korupce – III. stupeň", "Co přidává III. stupeň SAMS korupce?", "Omezené falšování záznamů a ošetření drobných ran a zranění."],
+["10.9", "SAMS korupce – IV. stupeň", "Co obsahuje nejvyšší, IV. stupeň SAMS korupce?", "Propouštění nebo oživování výhradně členů dané frakce a manipulaci se záznamy ve prospěch frakce."],
+]],
+];
+
+const SITUATIONAL = [
+["S1","Jsi svědkem loupeže v obchodě na rušné ulici. Co musí pachatel udělat, aby to nebylo PassiveRP?","1.16","Musí zvážit riziko dané lokace, v RP projevit adekvátní strach z dopadení (FearRP) a odeslat hlášení policii — u nelegální akce anonymně přes /911a s jasným popisem (počet osob, oblečení, vozidlo, směr útěku)."],
+["S2","Hráč ti v OOC napíše „stejně to admin vyřeší“. O jaké porušení jde?","1.9","Jde o Mixing — zakázané vnášení mimoherních (OOC) narážek na administraci/systém serveru do herní komunikace."],
+["S3","Tvoje postava dostane zásah do neprůstřelné vesty a upadne do deadscreenu. Můžeš dál RPit zranění jako lehké?","6.6","Ne. Do deadscreenu lze zásah do vesty hrát jako nefatální zranění, ale jakmile hráč upadne do DS, zpětné vydávání zranění jen za \"do vesty\" je zakázané."],
+["S4","Vezmeš rukojmí v bance a chceš žádat finanční výkupné. Je to možné?","6.8","Ne — u banky je jakékoliv finanční výkupné striktně zakázané. U obchodu/klenotnictví max. 20 000 $ a u únosu osoby max. 20 000 $ za akci, max. jednou za 24 h na osobu."],
+["S5","Chceš použít /try na to, jestli je auto pojízdné, bez přítomnosti dalšího hráče. Je to správně?","1.5","Špatně. /try se používá jen k vyhodnocení situace mezi hráči (např. na /do druhého hráče) a nesmí sloužit k passive RP bez interakce s jiným hráčem."],
+["S6","Hráč se odpojí ze serveru uprostřed přestřelky, které se přímo účastní. O co jde a je to povolené?","1.17","Jde o Combat Log — úmyslné/neodůvodněné odpojení během probíhající RP situace za účelem vyhnutí se následkům. Je zakázáno; hráč se nesmí odpojit, pokud je součástí akce týkající se jeho postavy nebo frakce."],
+["S7","Tvoje postava je unesena, vyhrožují jí zbraní, ale ty se rozhodneš hrdinsky bojovat a provokovat. Co porušuješ?","1.18 / 8.8","Porušuje se FearRP — postava neprojevuje adekvátní strach o život. Prokazatelně hrdinské/provokativní chování unesené osoby je navíc přímo uvedeno jako důvod pro udělení Situačního CK."],
+["S8","Cizí hráč opakovaně krouží kolem probíhajícího předělu drog. Smíte ho eliminovat?","9.9","Ano — jde o výjimku z pravidla o střelbě bez důvodu: opakované kroužení/sledování narušující probíhající nelegální akci je porušením NVL a skupina jej smí eliminovat, ale musí své jednání obhájit před adminem."],
+["S9","Chceš založit frakci se dvěma kamarády (celkem 3 lidi). Je to možné?","7.1","Ne — minimální počet členů pro založení frakce je 5, žádost se navíc podává přes ticket systém se vzorem (název, majitel, členové, lore min. 150 slov, hierarchie, popis, sídlo)."],
+["S10","Kolik lidí smí mít gang maximálně bez schválení A-Teamu?","7.5","Max. 10 členů (u dlouhodobého a kvalitního RP možnost navýšení o +5). Nad tuto hranici je nutné otevřít ticket a řešit to s A-Teamem."],
+["S11","Tvoje postava dostala CK. Můžeš převést všechen svůj majetek na novou postavu?","8.3","Ne — při CK hráč přichází o veškerý majetek. Převod na jiného hráče je možný jen pokud postava před smrtí prokazatelně sepsala úředně ověřenou závěť."],
+["S12","Jsi policista a tajně přechováváš nalezený kontraband. Je to schválená korupce?","7.11","Ne — přechovávání kontrabandu policistou je vždy bráno jako neschválená korupce, i kdyby měl jinak schválený nižší stupeň korupce."],
+["S13","Chceš vykrást banku a jako hlavní únikové vozidlo použít motorku. Je to v pořádku?","9.10","Ne — motorky a čtyřkolky nesmí být primárním (prvním) únikovým vozidlem při vykrádání/fast contentu, jen sekundárním v rámci promyšleného plánu."],
+["S14","Máš postavu ve vysoké hodnosti u policie a zároveň postavu v nelegální frakci. Je to povolené?","5.3","Ne — souběžné působení v legální i nelegální frakci je povoleno jen hráčům na nižších hodnostech ve státní složce, a druhá postava ve státní složce navíc vyžaduje schválenou výjimku přes ticket."],
+["S15","Chceš na serveru hrát dětskou postavu bez jakéhokoliv povolení. Je to možné?","5.6","Ne — hraní dětské postavy (nebo zvířete) je povoleno výhradně po předchozím schválení a udělení povolení od A-Teamu."],
+["S16","Při výslechu ti zadržený začne sdělovat citlivé informace o nelegální činnosti třetí osoby. Co musíš jako policista udělat?","7.12","Musíš výslech okamžitě pozastavit přes OOC chat a bezodkladně si u A-Teamu ověřit, zda má daný hráč schválený snitching. Pokud to neuděláš a pokračuješ, budeš potrestán stejně jako neoprávněně snitchující hráč."],
+["S17","Chceš nahrát hovor s jiným hráčem jako důkaz do ticketu bez jeho souhlasu. Je to možné?","4.5","Ano, ale jen v tomto konkrétním případě — nahrávání bez souhlasu je jinak přísně zakázané, jedinou výjimkou jsou záznamy sloužící jako důkazní materiál pro řešení ticketu."],
+["S18","Frakce chce zaútočit na sídlo nepřátelské frakce mimo předem schválený raid. Je to povolené?","7.13 / 6.14","Ne — útoky na sídla nelegálních frakcí mimo schválený raid jsou zakázané; jakýkoliv raid musí předem schválit A-Team přes ticket."]
+];
+
+let VIEW='new';
+const emptyReport=()=>({discordId:'',age:'',pohovor:'1',verdict:'',bl:false});
+let state={candidate:'',interviewer:'',ans:{},note:{},sans:{},snote:{},report:emptyReport()};
+let hist=[]; let histLoaded=false; let db=null;
+let sectionOpen={SIT:true}; let answerOpen={};
+
+function buildReportTextFor(r,bad,wrongDescs){
+  const id=(r.discordId||'').trim().replace(/[<@!>]/g,'');
+  const idPart=id?`<@${id}>`:'<@DC ID>';
+  const agePart=(r.age||'').trim()||'XX';
+  const parts=[idPart,`${agePart} Let`,`Chyba: ${bad||0}`];
+  if(wrongDescs&&wrongDescs.length)parts.push(wrongDescs.join(', '));
+  parts.push(r.verdict||'PROŠEL/NEPROŠEL');
+  let text=parts.join(' - ');
+  if(r.bl)text+=' + UDĚLENÉ BLACKLIST';
+  return text;
+}
+function getWrongDescs(){
+  const list=[];
+  SECTIONS.forEach(([,items])=>items.forEach(([c,shortname])=>{if(state.ans[c]==='bad')list.push(`${c} - ${shortname}`);}));
+  SITUATIONAL.forEach(([c,q,ref])=>{if(state.sans[c]==='bad')list.push(`${ref} - ${q.slice(0,40)}...`);});
+  return list;
+}
+function buildReportText(){return buildReportTextFor(state.report, scoreCalc().bad, getWrongDescs());}
+
+function scoreCalc(){
+  let ok=0,bad=0;
+  SECTIONS.forEach(([,items])=>items.forEach(([c])=>{if(state.ans[c]==='ok')ok++;else if(state.ans[c]==='bad')bad++;}));
+  SITUATIONAL.forEach(([c])=>{if(state.sans[c]==='ok')ok++;else if(state.sans[c]==='bad')bad++;});
+  const asked=ok+bad;
+  const pct=asked?Math.round(ok/asked*100):0;
+  return {ok,bad,asked,pct};
+}
+
+function verdictFor(pct,asked){
+  if(asked<10)return {cls:'v-none',label:'Nedostatek odpovědí'};
+  if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
+  if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
+  return {cls:'v-bad',label:'Nedoporučeno'};
+}
+
+function updateBar(){
+  const s=scoreCalc();
+  document.getElementById('scoretext').textContent=`${s.ok} správně, ${s.bad} špatně — ${s.asked} zodpovězeno`;
+  document.getElementById('scorefill').style.width=s.pct+'%';
+  const v=verdictFor(s.pct,s.asked);
+  const vEl=document.getElementById('verdict');
+  vEl.className='verdict '+v.cls;
+  vEl.textContent=s.asked?`${s.pct}% – ${v.label}`:'—';
+  document.getElementById('saveBtn').disabled=!state.candidate.trim();
+}
+
+function getWrongList(){
+  const wrong=[];
+  SECTIONS.forEach(([,items])=>items.forEach(([c,shortname])=>{if(state.ans[c]==='bad')wrong.push(`${c} ${shortname}${state.note[c]?' — '+state.note[c]:''}`);}));
+  SITUATIONAL.forEach(([c,q])=>{if(state.sans[c]==='bad')wrong.push(`${c} ${q.slice(0,40)}...${state.snote[c]?' — '+state.snote[c]:''}`);});
+  return wrong;
+}
+
+let mistakeModalShown=false;
+function closeMistakeModal(){
+  const el=document.getElementById('mistakeModal');
+  if(el)el.remove();
+}
+function showMistakeModal(){
+  closeMistakeModal();
+  const wrong=getWrongList();
+  const listHtml=wrong.length
+    ? wrong.map(w=>`<div class="wrow">✗ ${esc(w)}</div>`).join('')
+    : `<div class="modal-none">Žádné chyby nezaznamenány.</div>`;
+  const div=document.createElement('div');
+  div.className='modal-overlay';
+  div.id='mistakeModal';
+  div.innerHTML=`<div class="modal-box">
+    <h2>⛔ TŘETÍ CHYBA</h2>
+    <div class="sub">Pohovor byl automaticky ukončen (NEPROŠEL). Přehled chyb hráče:</div>
+    <div class="modal-wronglist">${listHtml}</div>
+    <button class="primary" id="mistakeModalClose">Rozumím</button>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('mistakeModalClose').onclick=closeMistakeModal;
+}
+
+function seg(kind,code,cur){
+  return `<div class="seg" data-kind="${kind}" data-code="${code}">
+    <button class="opt-ok ${cur==='ok'?'on-ok':''}" data-v="ok">Správně</button>
+    <button class="opt-bad ${cur==='bad'?'on-bad':''}" data-v="bad">Špatně</button>
+  </div>`;
+}
+
+function renderNew(){
+  const sc=scoreCalc();
+  const locked=sc.bad>=3;
+  if(locked&&!mistakeModalShown){
+    mistakeModalShown=true;
+    showMistakeModal();
+  }else if(!locked&&mistakeModalShown){
+    mistakeModalShown=false;
+    closeMistakeModal();
+  }
+  let mistakeBanner='';
+  if(sc.bad===2){
+    mistakeBanner=`<div class="warnbar warn2">⚠ HRÁČ MÁ DVĚ CHYBY – V PŘÍPADĚ DALŠÍ CHYBY POHOVOR UKONČIT.</div>`;
+  }else if(locked){
+    mistakeBanner=`<div class="warnbar warn3">⛔ TŘETÍ CHYBA – POHOVOR AUTOMATICKY UKONČEN (NEPROŠEL).</div>`;
+  }
+  let h=`<div class="card">
+    <div class="row">
+      <input type="text" id="candidate" placeholder="Jméno uchazeče (OOC nick)" value="${esc(state.candidate)}">
+      <input type="text" id="interviewer" placeholder="Jméno zkoušejícího" value="${esc(state.interviewer)}">
+    </div>
+  </div>
+  ${mistakeBanner}
+  <div id="qwrap" class="${locked?'locked':''}">`;
+  SECTIONS.forEach(([name,items])=>{
+    let answered=items.filter(([c])=>state.ans[c]).length;
+    h+=`<details class="section" data-sec="${esc(name)}" ${sectionOpen[name]?'open':''}><summary>${name}<span class="badge">${answered}/${items.length}</span></summary>`;
+    items.forEach(([c,shortname,q,ans])=>{
+      const openAns=!!answerOpen['r'+c];
+      h+=`<div class="item">
+        <span class="code">${c}</span>
+        <span class="label">${esc(q)} <span class="ref">(${esc(shortname)})</span>${state.ans[c]==='bad'?`<span class="violation">✗ Porušení pravidla ${c}</span>`:''}</span>
+        ${seg('r',c,state.ans[c])}
+        <input class="note" data-nkind="r" data-ncode="${c}" placeholder="poznámka" value="${esc(state.note[c]||'')}">
+        <button class="tab" style="padding:5px 10px;font-size:11px" data-ans="r${c}">Odpověď</button>
+      </div>
+      <div class="small ansbox" id="ansr${c}" style="display:${openAns?'block':'none'};margin:0 16px 8px;padding:8px 10px;background:var(--panel2);border-radius:8px">${esc(ans)}</div>`;
+    });
+    h+=`</details>`;
+  });
+  h+=`<details class="section" data-sec="SIT" ${sectionOpen['SIT']?'open':''}><summary>Situační otázky<span class="badge">${SITUATIONAL.filter(([c])=>state.sans[c]).length}/${SITUATIONAL.length}</span></summary>`;
+  SITUATIONAL.forEach(([c,q,ref,ans])=>{
+    const openAns=!!answerOpen[c];
+    h+=`<div class="sit">
+      <div class="q"><b>${c}.</b> ${esc(q)} <span class="ref">(pravidlo ${ref})</span>${state.sans[c]==='bad'?`<span class="violation">✗ Porušení pravidla ${ref}</span>`:''}</div>
+      <div class="row" style="align-items:center">
+        ${seg('s',c,state.sans[c])}
+        <input class="note" data-nkind="s" data-ncode="${c}" placeholder="poznámka" value="${esc(state.snote[c]||'')}">
+        <button class="tab" style="padding:5px 10px;font-size:11px" data-ans="${c}">Odpověď</button>
+      </div>
+      <div class="small ansbox" id="ans${c}" style="display:${openAns?'block':'none'};margin-top:6px;padding:8px 10px;background:var(--panel2);border-radius:8px">${esc(ans)}</div>
+    </div>`;
+  });
+  h+=`</details></div>`;
+
+  const r=state.report;
+  const ageNum=parseInt(r.age,10);
+  const underage=Number.isFinite(ageNum)&&ageNum<16;
+  const forceFail=underage||locked;
+  if(forceFail && r.verdict==='PROŠEL')r.verdict='NEPROŠEL';
+  h+=`<div class="card report-card">
+    <h3>📋 Report pro Discord</h3>
+    <div class="report-grid">
+      <input type="text" id="rep-discord" placeholder="Discord ID uchazeče" value="${esc(r.discordId)}">
+      <input type="text" inputmode="numeric" id="rep-age" placeholder="Věk" value="${esc(r.age)}">
+    </div>
+    <div class="small" id="rep-age-warn" style="color:var(--bad);margin:-4px 0 10px;display:${underage?'block':'none'}">⚠ Nesplňuje minimální věk 16 let – nelze označit jako PROŠEL.</div>
+    <div class="pickrow">
+      <span class="lbl">Pohovor č.</span>
+      <div class="pickseg" data-pick="pohovor">
+        ${['1','2','3'].map(v=>`<button data-v="${v}" class="${r.pohovor===v?'active':''}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="pickrow">
+      <span class="lbl">Výsledek</span>
+      <div class="pickseg" data-pick="verdict">
+        <button id="rep-v-pass" data-v="PROŠEL" class="${r.verdict==='PROŠEL'?'active':''}" ${forceFail?'disabled':''}>PROŠEL</button>
+        <button id="rep-v-fail" data-v="NEPROŠEL" class="${r.verdict==='NEPROŠEL'?'active v-bad-btn':''}">NEPROŠEL</button>
+      </div>
+    </div>
+    <div class="blrow">
+      <input type="checkbox" id="rep-bl" ${r.bl?'checked':''}>
+      <label for="rep-bl">Udělit Blacklist (3. neúspěšný pokus / závažné porušení)</label>
+    </div>
+    <div class="reportout" id="rep-out">${esc(buildReportText())}</div>
+    <button class="copybtn" id="rep-copy">Kopírovat text</button>
+  </div>`;
+
+  document.getElementById('main').innerHTML=h;
+  document.getElementById('bar').style.display='flex';
+  wireNew();
+  updateBar();
+}
+
+function wireNew(){
+  document.getElementById('candidate').oninput=e=>{state.candidate=e.target.value;updateBar();};
+  document.getElementById('interviewer').oninput=e=>{state.interviewer=e.target.value;};
+  document.querySelectorAll('.seg button').forEach(btn=>{
+    btn.onclick=()=>{
+      const seg=btn.parentElement; const kind=seg.dataset.kind; const code=seg.dataset.code; const v=btn.dataset.v;
+      const target=kind==='r'?state.ans:state.sans;
+      target[code]=(target[code]===v)?undefined:v;
+      renderNew();
+    };
+  });
+  document.querySelectorAll('input.note').forEach(inp=>{
+    inp.oninput=e=>{
+      const k=e.target.dataset.nkind; const c=e.target.dataset.ncode;
+      (k==='r'?state.note:state.snote)[c]=e.target.value;
+    };
+  });
+  document.querySelectorAll('[data-ans]').forEach(btn=>{
+    btn.onclick=()=>{
+      const key=btn.dataset.ans;
+      answerOpen[key]=!answerOpen[key];
+      const box=document.getElementById('ans'+key);
+      box.style.display=answerOpen[key]?'block':'none';
+    };
+  });
+  document.querySelectorAll('details.section').forEach(d=>{
+    d.ontoggle=()=>{ sectionOpen[d.dataset.sec]=d.open; };
+  });
+
+  const repDiscord=document.getElementById('rep-discord');
+  const repAge=document.getElementById('rep-age');
+  const repBl=document.getElementById('rep-bl');
+  const repOut=document.getElementById('rep-out');
+  const refreshOut=()=>{repOut.textContent=buildReportText();};
+  function refreshAgeGate(){
+    const ageNum=parseInt(state.report.age,10);
+    const underage=Number.isFinite(ageNum)&&ageNum<16;
+    const locked=scoreCalc().bad>=3;
+    const forceFail=underage||locked;
+    const warn=document.getElementById('rep-age-warn');
+    if(warn)warn.style.display=underage?'block':'none';
+    const passBtn=document.getElementById('rep-v-pass');
+    const failBtn=document.getElementById('rep-v-fail');
+    if(passBtn)passBtn.disabled=forceFail;
+    if(forceFail && state.report.verdict==='PROŠEL'){
+      state.report.verdict='NEPROŠEL';
+      if(passBtn)passBtn.classList.remove('active');
+      if(failBtn){failBtn.classList.add('active');failBtn.classList.add('v-bad-btn');}
+    }
+    refreshOut();
+  }
+  if(repDiscord)repDiscord.oninput=e=>{state.report.discordId=e.target.value;refreshOut();};
+  if(repAge)repAge.oninput=e=>{state.report.age=e.target.value;refreshAgeGate();};
+  if(repBl)repBl.onchange=e=>{state.report.bl=e.target.checked;refreshOut();};
+  document.querySelectorAll('.pickseg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(btn=>{
+      btn.onclick=()=>{
+        const key=seg.dataset.pick;
+        state.report[key]=btn.dataset.v;
+        renderNew();
+      };
+    });
+  });
+  const copyBtn=document.getElementById('rep-copy');
+  if(copyBtn)copyBtn.onclick=async()=>{
+    const text=buildReportText();
+    try{
+      await navigator.clipboard.writeText(text);
+    }catch(e){
+      const ta=document.createElement('textarea');
+      ta.value=text; document.body.appendChild(ta); ta.select();
+      try{document.execCommand('copy');}catch(e2){}
+      document.body.removeChild(ta);
+    }
+    copyBtn.textContent='Zkopírováno ✓';
+    copyBtn.classList.add('done');
+    setTimeout(()=>{copyBtn.textContent='Kopírovat text';copyBtn.classList.remove('done');},1500);
+  };
+}
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+async function saveInterview(){
+  if(!db)return alert('Sdílené úložiště není dostupné, výsledek nelze uložit.');
+  const s=scoreCalc();
+  const v=verdictFor(s.pct,s.asked);
+  const wrong=getWrongList();
+  const wrongDescs=getWrongDescs();
+  const rec={candidate:state.candidate.trim(),interviewer:state.interviewer.trim(),score:s.pct,ok:s.ok,bad:s.bad,asked:s.asked,verdict:v.label,wrong,wrongDescs,ts:Date.now(),report:{...state.report}};
+  try{
+    await db.collection('interviews').add(rec);
+    state={candidate:'',interviewer:'',ans:{},note:{},sans:{},snote:{},report:emptyReport()};
+    histLoaded=false;
+    mistakeModalShown=false;
+    closeMistakeModal();
+    renderNew();
+    alert('Pohovor uložen.');
+  }catch(e){alert('Uložení se nezdařilo: '+(e&&e.message||e));}
+}
+
+async function loadHist(){
+  if(!db){document.getElementById('main').innerHTML='<div class="empty">Sdílené úložiště není dostupné.</div>';return;}
+  document.getElementById('main').innerHTML='<div class="empty">Načítám…</div>';
+  try{
+    const snap=await db.collection('interviews').orderBy('ts','desc').limit(50).get();
+    hist=snap.docs.map(d=>d.data());
+    histLoaded=true;
+    renderHist();
+  }catch(e){document.getElementById('main').innerHTML='<div class="empty">Nepodařilo se načíst historii.</div>';}
+}
+
+function renderHist(){
+  document.getElementById('bar').style.display='none';
+  if(!hist.length){document.getElementById('main').innerHTML='<div class="empty">Zatím žádné uložené pohovory.</div>';return;}
+  let h='<div class="card" style="padding:0">';
+  hist.forEach((r,i)=>{
+    const d=new Date(r.ts);
+    const vcls=r.score>=85?'v-ok':r.score>=65?'v-mid':'v-bad';
+    h+=`<div class="hist-item" data-i="${i}">
+      <div class="hist-top">
+        <div><b>${esc(r.candidate||'—')}</b> <span class="small">· ${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})}${r.interviewer?' · zkoušel: '+esc(r.interviewer):''}</span></div>
+        <span class="verdict ${vcls}">${r.asked?r.score+'% – '+esc(r.verdict):'—'}</span>
+      </div>
+      <div class="hist-detail" id="hd${i}">
+        <div class="small">Správně: ${r.ok} · Špatně: ${r.bad} · Zodpovězeno: ${r.asked}</div>
+        ${r.wrong&&r.wrong.length?'<div style="margin-top:6px">'+r.wrong.map(w=>`<div class="bad-row">✗ ${esc(w)}</div>`).join('')+'</div>':'<div class="small" style="margin-top:6px">Žádné chyby nezaznamenány.</div>'}
+        ${r.report&&(r.report.discordId||r.report.verdict)?`<div class="reportout" style="margin-top:8px">${esc(buildReportTextFor(r.report,r.bad,r.wrongDescs||[]))}</div>`:''}
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  document.getElementById('main').innerHTML=h;
+  document.querySelectorAll('.hist-item').forEach(el=>{
+    el.onclick=()=>{document.getElementById('hd'+el.dataset.i).classList.toggle('open');};
+  });
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    VIEW=t.dataset.tab;
+    if(VIEW==='new')renderNew();
+    else{ if(!histLoaded)loadHist(); else renderHist(); document.getElementById('bar').style.display='none';}
+  };
+});
+document.getElementById('bar').addEventListener('click',e=>{if(e.target.id==='saveBtn')saveInterview();});
+
+renderNew();
+(async()=>{ db = await (window.claude ? window.claude.use('db') : Promise.resolve(null)); if(VIEW==='hist')loadHist(); })();
+</script>
+</body>
+</html>
