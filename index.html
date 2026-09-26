@@ -145,7 +145,7 @@ const SECTIONS = [
 ["1.13", "NonRP Driving", "Hráč jezdí terénním vozem po střechách budov a naráží bez jakéhokoliv poškození. Je to v pořádku?", "Ne, jde o NonRP Driving – nerealistickou jízdu neodpovídající vozidlu, terénu ani situaci. Posuzuje ji admin team a v nejasných případech je vhodné se předem zeptat."],
 ["1.14", "NonRP Injuries", "Postava dostane zásah ze střelné zbraně a hráč to odehraje jako pouhé škrábnutí. Je to správně?", "Ne, jde o NonRP Injuries – nerealistické nebo nedostatečné zahrání zranění je zakázáno, např. vydávání střelného zranění za škrábnutí."],
 ["1.15", "AssPulling", "Hráč bez jakéhokoliv RP vytáhne z kapsy velkou bednu s výbavou. O co jde?", "Jde o AssPulling – vytahování velkých předmětů z inventáře či animací bez odpovídajícího RP (netýká se dlouhých zbraní)."],
-["1.16", "PassiveRP / 911 hlášení", "Pachatel loupeže na rušné ulici nijak neřeší okolí ani riziko dopadení. Co porušuje?", "Porušuje PassiveRP – svět není liduprázdný, hráč musí zvážit riziko dané lokace, hrát reálný strach (FearRP) a u nelegální akce ji nahlásit policii (911/911a)."],
+["1.16", "PassiveRP / 911 hlášení", "Pachatel okrádá na rušné ulici nijak neřeší okolí ani riziko dopadení. Co porušuje?", "Porušuje PassiveRP – svět není liduprázdný, hráč musí zvážit riziko dané lokace, hrát reálný strach (FearRP) a u nelegální akce ji nahlásit policii (911/911a)."],
 ["1.17", "Combat Log", "Hráč se uprostřed přestřelky, které se aktivně účastní, odpojí ze serveru, aby unikl následkům. O co jde?", "Jde o Combat Log – úmyslné nebo neodůvodněné odpojení během RP situace, které je zakázané minimálně 15 minut po zahájení akce."],
 ["1.18", "FearRP", "Postavě někdo míří zbraní a vyhrožuje, ale hráč to úplně ignoruje a dál normálně chodí. Co porušuje?", "Porušuje FearRP – povinnost hrát reálný strach o život, majetek nebo zaměstnání při ohrožení (např. JobFear, DogFear, GunFear)."],
 ["1.19", "Hood Fear", "Hráč bez respektu vjede do jasně vyznačeného teritoria gangu a chová se tam nevhodně. Co riskuje?", "Riskuje konflikt kvůli porušení Hood Fear – nutnosti respektovat území gangů, kdy neobvyklé či nerespektující chování může vést ke konfliktu."],
@@ -171,7 +171,7 @@ const SECTIONS = [
 ]],
 ["4. Komunikace",[
 ["4.1", "OOC jen na Discordu", "Kde má probíhat veškerá mimoherní (OOC) komunikace mezi hráči?", "Výhradně na Discordu."],
-["4.2", "Tickety na webu", "Kde se podávají a řeší admin tickety?", "Jen přes ticket systém na oficiálním webu."],
+["4.2", "Tickety na webu nebo Discordu", "Kde se podávají a řeší admin tickety?", "Jen přes ticket systém na oficiálním webu nebo Ticket Discordu."],
 ["4.3", "Spam zákaz", "Hráč opakovaně posílá stejnou nebo nerelevantní zprávu a zahlcuje tím kanál. Je to v pořádku?", "Ne – jde o zakázaný spam, tedy zahlcování kanálů a opakované posílání stejných/nerelevantních zpráv."],
 ["4.4", "Dohled nad A-Teamem", "Máš podezření, že člen A-Teamu zneužívá své pravomoci. Co můžeš udělat?", "A-Team podléhá vedení serveru, takže podezření na zneužití pravomocí lze anonymně nahlásit přes k tomu určený ticket."],
 ["4.5", "Nahrávání bez souhlasu", "Chceš nahrát rozhovor s jiným hráčem bez jeho souhlasu jako důkaz do ticketu. Je to výjimečně možné?", "Ano, ale pouze jako důkazní materiál pro řešení ticketu – jinak je nahrávání bez výslovného souhlasu všech zúčastněných přísně zakázáno."],
@@ -408,7 +408,7 @@ function scoreCalc(){
 
 function verdictFor(pct,asked,situAsked,classicAsked){
   if(asked<10)return {cls:'v-none',label:'Nedostatek odpovědí'};
-  if((classicAsked||0)<14)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 14)'};
+  if((classicAsked||0)<14)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 10)'};
   if((situAsked||0)<2)return {cls:'v-none',label:'Nedostatek situačních otázek (min. 2)'};
   if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
   if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
