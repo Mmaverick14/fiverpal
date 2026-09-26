@@ -382,11 +382,11 @@ function buildReportTextFor(r,bad,wrongDescs){
   const underage=Number.isFinite(ageNum)&&ageNum<16;
   const forceFail=underage||(bad>=3);
   const verdict=forceFail?'NEPROŠEL':(r.verdict||'PROŠEL/NEPROŠEL');
-  const parts=[idPart,`${agePart} Let`,`Chyba: ${bad||0}`];
+  const parts=[idPart,`**Let:** ${agePart}`,`**Chyba:** ${bad||0}`];
   if(wrongDescs&&wrongDescs.length)parts.push(wrongDescs.join(', '));
-  parts.push(verdict);
-  let text=parts.join(' - ');
-  if(r.bl)text+=' + UDĚLEN BLACKLIST';
+  parts.push(`**${verdict}**`);
+  let text='*'+parts.join(' - ')+'*';
+  if(r.bl)text+=' + **UDĚLEN BLACKLIST**';
   return text;
 }
 function getWrongDescs(){
