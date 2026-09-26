@@ -411,7 +411,7 @@ function verdictFor(pct,asked,situAsked,classicAsked){
   if((classicAsked||0)<10)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 10)'};
   if((situAsked||0)<2)return {cls:'v-none',label:'Nedostatek situačních otázek (min. 2)'};
   if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
-  if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
+  if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení v pokračovaní pohovoru'};
   return {cls:'v-bad',label:'Nedoporučeno'};
 }
 
