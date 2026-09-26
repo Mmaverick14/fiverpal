@@ -31,6 +31,14 @@ header h1{font-size:16px;margin:0;letter-spacing:.5px;color:var(--accent);font-f
 .tab{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px;cursor:pointer;}
 .tab.active{background:var(--accent);color:#08110d;border-color:var(--accent);font-weight:600;}
 main{max-width:820px;margin:0 auto;padding:16px;}
+.checkstep{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;background:var(--panel2);transition:border-color .15s,background .15s;}
+.checkstep input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+.checkstep.done{border-color:var(--ok);background:rgba(58,208,160,.08);}
+.checkstep b{font-size:14px;}
+.rulesbox{background:rgba(224,90,90,.06);border:1px solid var(--bad);border-left:4px solid var(--bad);border-radius:10px;padding:14px 16px;margin:14px 0 4px;}
+.rulesbox-title{font-weight:700;color:var(--accent2);margin-bottom:8px;font-size:14px;}
+.rulesbox-row{font-size:13.5px;color:var(--text);margin:5px 0;}
+.rulesbox-critical{margin-top:10px;padding:10px 12px;background:rgba(224,90,90,.2);border:1px solid var(--bad);border-radius:8px;color:var(--bad);font-weight:700;font-size:14px;letter-spacing:.2px;}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
 .row{display:flex;gap:10px;flex-wrap:wrap;}
 input[type=text]{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;flex:1;min-width:160px;}
@@ -45,7 +53,7 @@ details.section>summary::-webkit-details-marker{display:none;}
 .seg button{border:none;background:var(--panel2);color:var(--muted);padding:5px 10px;font-size:12px;cursor:pointer;}
 .seg button.on-ok{background:var(--ok);color:#08110d;}
 .seg button.on-bad{background:var(--bad);color:#1a0505;}
-.item input.note{background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;width:140px;}
+input.note{background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;padding:5px 8px;width:140px;}
 .sit{padding:12px 16px;border-top:1px solid var(--border);}
 .sit .q{font-size:13.5px;margin-bottom:6px;}
 .sit .ref{color:var(--muted);font-size:11px;font-family:monospace;}
@@ -105,7 +113,7 @@ button.primary:disabled{opacity:.4;}
 </head>
 <body>
 <header>
-  <h1>⚡FiveRP AllowList Pohovor</h1>
+  <h1>⚡ FiveRP AllowList Pohovor</h1>
   <div class="tabs">
     <button class="tab active" id="newBtn">Nový pohovor</button>
   </div>
@@ -295,18 +303,90 @@ const SITUATIONAL = [
 ];
 
 const emptyReport=()=>({discordId:'',age:'',pohovor:'1',verdict:'',bl:false});
-let state={candidate:'',interviewer:'',ans:{},note:{},sans:{},snote:{},report:emptyReport()};
+let state={ans:{},note:{},sans:{},snote:{},report:emptyReport()};
 let sectionOpen={SIT:true}; let answerOpen={};
+
+let VIEW='checklist';
+let checklist={};
+const CHECKLIST_STEPS=[
+  {id:'pick', title:'1. Vyber uchazeče', text:'Vyberte si člověka, co čeká nejdéle, projeďte jeho profil a zkontrolujte, zda splňuje podmínky.'},
+  {id:'greet', title:'2. Přesun a pozdrav', text:'Přesuňte si ho k sobě a pozdravte. Pokud je muted, dejte mu chvilku – pokud se neodmutuje, vyhoďte ho (nevracejte ho, sám se vrátí, až si toho všimne).'},
+  {id:'basics', title:'3. Základní info', text:'Zeptejte se na věk, jaké má zkušenosti s RP a jestli má zažádáno na stránkách. Pokud ne, nevadí – buď ho vraťte zpět do čekárny a vezměte někoho, kdo zažádáno má, nebo ho na stránky nasměrujte.'},
+  {id:'terms', title:'4. Seznámení s podmínkami', text:'Seznamte ho s podmínkami: kolik smí mít maximálně chyb, kolik má pokusů na pohovor, a že při nezvládnutí ani na 3. pokus obdrží Blacklist.'},
+  {id:'share', title:'5. Sdílení obrazovky a dotazy', text:'Vyzvěte ho, ať zapne sdílení obrazovky, a zeptejte se, jestli má nějaké dotazy k pravidlu. Pokud ano, nejdřív se zeptejte, jak pravidlu rozumí on, a pak ho potvrďte nebo opravte.'}
+];
+
+function renderChecklist(){
+  document.getElementById('bar').style.display='none';
+  let h=`<div class="card">
+    <h2 style="margin-top:0">📋 Postup před pohovorem</h2>
+    <div class="small" style="margin-bottom:14px;color:var(--muted)">Projdi a odškrtni všechny kroky, než pohovor spustíš.</div>`;
+  CHECKLIST_STEPS.forEach(s=>{
+    const checked=!!checklist[s.id];
+    h+=`<label class="checkstep ${checked?'done':''}">
+      <input type="checkbox" data-step="${s.id}" ${checked?'checked':''}>
+      <div><b>${esc(s.title)}</b><div class="small" style="margin-top:2px;color:var(--muted)">${esc(s.text)}</div></div>
+    </label>`;
+  });
+  h+=`<div class="rulesbox">
+    <div class="rulesbox-title">⚠ Podmínky pohovoru</div>
+    <div class="rulesbox-row">Max. <b>2 chyby</b> (3. chyba = automatický konec a NEPROŠEL)</div>
+    <div class="rulesbox-row">Uchazeč má celkem <b>3 pokusy</b> na pohovor</div>
+    <div class="rulesbox-critical">⛔ Pokud neuspěje ani na 3. POKUS, obdrží BLACKLIST</div>
+  </div>`;
+  const allDone=CHECKLIST_STEPS.every(s=>checklist[s.id]);
+  h+=`<button class="primary" id="continueBtn" ${allDone?'':'disabled'} style="width:100%;margin-top:16px">Pokračovat na pohovor</button>
+  </div>`;
+  document.getElementById('main').innerHTML=h;
+  document.querySelectorAll('[data-step]').forEach(cb=>{
+    cb.onchange=e=>{checklist[e.target.dataset.step]=e.target.checked;renderChecklist();};
+  });
+  const cbtn=document.getElementById('continueBtn');
+  if(cbtn)cbtn.onclick=()=>{VIEW='interview';renderNew();};
+}
+
+
+function getVerdictGate(){
+  const ageNum=parseInt(state.report.age,10);
+  const underage=Number.isFinite(ageNum)&&ageNum<16;
+  const sc=scoreCalc();
+  const locked=sc.bad>=3;
+  const forceFail=underage||locked;
+  let incompleteMsg='';
+  if(sc.situAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit situačních otázek (min. 2).';
+  else if(sc.classicAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit klasických otázek (min. 2).';
+  const passDisabled=forceFail||!!incompleteMsg;
+  return {underage,forceFail,incompleteMsg,passDisabled};
+}
+function getEffectiveVerdict(){
+  return getVerdictGate().forceFail?'NEPROŠEL':state.report.verdict;
+}
+function buildClosingText(bad,pohovor,verdict){
+  if(!verdict){
+    return 'Nejprve vyber výsledek pohovoru (PROŠEL / NEPROŠEL).';
+  }
+  if(verdict==='PROŠEL'){
+    return `Aktuálně jsi prošel wl s ${bad} chybami, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné RP.`;
+  }
+  if(pohovor==='3'){
+    return `Aktuálně si překročil počet chyb (${bad}) a whitelistem jsi neprošel, dostáváš tedy BL, který je permanentní. Měj hezky zbytek dne, AHOJ.`;
+  }
+  return `Aktuálně jsi překročil počet chyb (${bad}) a whitelistem jsi neprošel, nárok na další pokus máš až následující den, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné zbytek dne.`;
+}
 
 function buildReportTextFor(r,bad,wrongDescs){
   const id=(r.discordId||'').trim().replace(/[<@!>]/g,'');
   const idPart=id?`<@${id}>`:'<@DC ID>';
   const agePart=(r.age||'').trim()||'XX';
+  const ageNum=parseInt(r.age,10);
+  const underage=Number.isFinite(ageNum)&&ageNum<16;
+  const forceFail=underage||(bad>=3);
+  const verdict=forceFail?'NEPROŠEL':(r.verdict||'PROŠEL/NEPROŠEL');
   const parts=[idPart,`${agePart} Let`,`Chyba: ${bad||0}`];
   if(wrongDescs&&wrongDescs.length)parts.push(wrongDescs.join(', '));
-  parts.push(r.verdict||'PROŠEL/NEPROŠEL');
+  parts.push(verdict);
   let text=parts.join(' - ');
-  if(r.bl)text+=' + UDĚLENÝ BLACKLIST';
+  if(r.bl)text+=' + UDĚLENÉ BLACKLIST';
   return text;
 }
 function getWrongDescs(){
@@ -318,16 +398,18 @@ function getWrongDescs(){
 function buildReportText(){return buildReportTextFor(state.report, scoreCalc().bad, getWrongDescs());}
 
 function scoreCalc(){
-  let ok=0,bad=0;
-  SECTIONS.forEach(([,items])=>items.forEach(([c])=>{if(state.ans[c]==='ok')ok++;else if(state.ans[c]==='bad')bad++;}));
-  SITUATIONAL.forEach(([c])=>{if(state.sans[c]==='ok')ok++;else if(state.sans[c]==='bad')bad++;});
+  let ok=0,bad=0,classicAsked=0,situAsked=0;
+  SECTIONS.forEach(([,items])=>items.forEach(([c])=>{if(state.ans[c]==='ok'){ok++;classicAsked++;}else if(state.ans[c]==='bad'){bad++;classicAsked++;}}));
+  SITUATIONAL.forEach(([c])=>{if(state.sans[c]==='ok'){ok++;situAsked++;}else if(state.sans[c]==='bad'){bad++;situAsked++;}});
   const asked=ok+bad;
   const pct=asked?Math.round(ok/asked*100):0;
-  return {ok,bad,asked,pct};
+  return {ok,bad,asked,pct,classicAsked,situAsked};
 }
 
-function verdictFor(pct,asked){
+function verdictFor(pct,asked,situAsked,classicAsked){
   if(asked<10)return {cls:'v-none',label:'Nedostatek odpovědí'};
+  if((situAsked||0)<2)return {cls:'v-none',label:'Nedostatek situačních otázek (min. 2)'};
+  if((classicAsked||0)<2)return {cls:'v-none',label:'Nedostatek klasických otázek'};
   if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
   if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
   return {cls:'v-bad',label:'Nedoporučeno'};
@@ -337,7 +419,7 @@ function updateBar(){
   const s=scoreCalc();
   document.getElementById('scoretext').textContent=`${s.ok} správně, ${s.bad} špatně — ${s.asked} zodpovězeno`;
   document.getElementById('scorefill').style.width=s.pct+'%';
-  const v=verdictFor(s.pct,s.asked);
+  const v=verdictFor(s.pct,s.asked,s.situAsked,s.classicAsked);
   const vEl=document.getElementById('verdict');
   vEl.className='verdict '+v.cls;
   vEl.textContent=s.asked?`${s.pct}% – ${v.label}`:'—';
@@ -374,6 +456,25 @@ function showMistakeModal(){
   document.getElementById('mistakeModalClose').onclick=closeMistakeModal;
 }
 
+let ageModalShown=false;
+function closeAgeModal(){
+  const el=document.getElementById('ageModal');
+  if(el)el.remove();
+}
+function showAgeModal(age){
+  closeAgeModal();
+  const div=document.createElement('div');
+  div.className='modal-overlay';
+  div.id='ageModal';
+  div.innerHTML=`<div class="modal-box">
+    <h2>⛔ NEDOSTATEČNÝ VĚK</h2>
+    <div class="sub">Uchazeč nesplňuje minimální věk 16 let (zadáno: ${esc(String(age))} let). Pohovor nelze označit jako PROŠEL.</div>
+    <button class="primary" id="ageModalClose">Rozumím</button>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('ageModalClose').onclick=closeAgeModal;
+}
+
 function seg(kind,code,cur){
   return `<div class="seg" data-kind="${kind}" data-code="${code}">
     <button class="opt-ok ${cur==='ok'?'on-ok':''}" data-v="ok">Správně</button>
@@ -397,13 +498,47 @@ function renderNew(){
   }else if(locked){
     mistakeBanner=`<div class="warnbar warn3">⛔ TŘETÍ CHYBA – POHOVOR AUTOMATICKY UKONČEN (NEPROŠEL).</div>`;
   }
-  let h=`<div class="card">
-    <div class="row">
-      <input type="text" id="candidate" placeholder="Jméno uchazeče (OOC nick)" value="${esc(state.candidate)}">
-      <input type="text" id="interviewer" placeholder="Jméno zkoušejícího" value="${esc(state.interviewer)}">
-    </div>
-  </div>
+
+  const r=state.report;
+  const gate=getVerdictGate();
+  const underage=gate.underage;
+  const forceFail=gate.forceFail;
+  if(gate.incompleteMsg && r.verdict==='PROŠEL')r.verdict='';
+  const effectiveVerdict=forceFail?'NEPROŠEL':r.verdict;
+
+  let h=`
   ${mistakeBanner}
+  <div class="card report-card">
+    <h3>📋 Report pro Discord</h3>
+    <div class="report-grid">
+      <input type="text" id="rep-discord" placeholder="Discord ID uchazeče" value="${esc(r.discordId)}">
+      <input type="text" inputmode="numeric" id="rep-age" placeholder="Věk" value="${esc(r.age)}">
+    </div>
+    <div class="small" id="rep-age-warn" style="color:var(--bad);margin:-4px 0 10px;display:${underage?'block':'none'}">⚠ Nesplňuje minimální věk 16 let – nelze označit jako PROŠEL.</div>
+    <div class="small" id="rep-incomplete-warn" style="color:var(--bad);margin:-4px 0 10px;display:${gate.incompleteMsg?'block':'none'}">⚠ ${esc(gate.incompleteMsg||'')}</div>
+    <div class="pickrow">
+      <span class="lbl">Pohovor č.</span>
+      <div class="pickseg" data-pick="pohovor">
+        ${['1','2','3'].map(v=>`<button data-v="${v}" class="${r.pohovor===v?'active':''}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="pickrow">
+      <span class="lbl">Výsledek</span>
+      <div class="pickseg" data-pick="verdict">
+        <button id="rep-v-pass" data-v="PROŠEL" class="${effectiveVerdict==='PROŠEL'?'active':''}" ${gate.passDisabled?'disabled':''}>PROŠEL</button>
+        <button id="rep-v-fail" data-v="NEPROŠEL" class="${effectiveVerdict==='NEPROŠEL'?'active v-bad-btn':''}">NEPROŠEL</button>
+      </div>
+    </div>
+    <div class="blrow">
+      <input type="checkbox" id="rep-bl" ${r.bl?'checked':''}>
+      <label for="rep-bl">Udělit Blacklist (3. neúspěšný pokus / závažné porušení)</label>
+    </div>
+    <div class="reportout" id="rep-out">${esc(buildReportText())}</div>
+    <button class="copybtn" id="rep-copy">Kopírovat text</button>
+    <h3 style="margin-top:18px">🗣️ Závěr pohovoru</h3>
+    <div class="reportout" id="rep-closing">${esc(buildClosingText(sc.bad,r.pohovor,effectiveVerdict))}</div>
+    <button class="copybtn" id="rep-closing-copy">Kopírovat text</button>
+  </div>
   <div id="qwrap" class="${locked?'locked':''}">`;
   SECTIONS.forEach(([name,items])=>{
     let answered=items.filter(([c])=>state.ans[c]).length;
@@ -436,47 +571,13 @@ function renderNew(){
   });
   h+=`</details></div>`;
 
-  const r=state.report;
-  const ageNum=parseInt(r.age,10);
-  const underage=Number.isFinite(ageNum)&&ageNum<16;
-  const forceFail=underage||locked;
-  if(forceFail && r.verdict==='PROŠEL')r.verdict='NEPROŠEL';
-  h+=`<div class="card report-card">
-    <h3>📋 Report pro Discord</h3>
-    <div class="report-grid">
-      <input type="text" id="rep-discord" placeholder="Discord ID uchazeče" value="${esc(r.discordId)}">
-      <input type="text" inputmode="numeric" id="rep-age" placeholder="Věk" value="${esc(r.age)}">
-    </div>
-    <div class="small" id="rep-age-warn" style="color:var(--bad);margin:-4px 0 10px;display:${underage?'block':'none'}">⚠ Nesplňuje minimální věk 16 let – nelze označit jako PROŠEL.</div>
-    <div class="pickrow">
-      <span class="lbl">Pohovor č.</span>
-      <div class="pickseg" data-pick="pohovor">
-        ${['1','2','3'].map(v=>`<button data-v="${v}" class="${r.pohovor===v?'active':''}">${v}</button>`).join('')}
-      </div>
-    </div>
-    <div class="pickrow">
-      <span class="lbl">Výsledek</span>
-      <div class="pickseg" data-pick="verdict">
-        <button id="rep-v-pass" data-v="PROŠEL" class="${r.verdict==='PROŠEL'?'active':''}" ${forceFail?'disabled':''}>PROŠEL</button>
-        <button id="rep-v-fail" data-v="NEPROŠEL" class="${r.verdict==='NEPROŠEL'?'active v-bad-btn':''}">NEPROŠEL</button>
-      </div>
-    </div>
-    <div class="blrow">
-      <input type="checkbox" id="rep-bl" ${r.bl?'checked':''}>
-      <label for="rep-bl">Udělit Blacklist (3. neúspěšný pokus / závažné porušení)</label>
-    </div>
-    <div class="reportout" id="rep-out">${esc(buildReportText())}</div>
-    <button class="copybtn" id="rep-copy">Kopírovat text</button>
-  </div>`;
-
   document.getElementById('main').innerHTML=h;
+  document.getElementById('bar').style.display='flex';
   wireNew();
   updateBar();
 }
 
 function wireNew(){
-  document.getElementById('candidate').oninput=e=>{state.candidate=e.target.value;updateBar();};
-  document.getElementById('interviewer').oninput=e=>{state.interviewer=e.target.value;};
   document.querySelectorAll('.seg button').forEach(btn=>{
     btn.onclick=()=>{
       const seg=btn.parentElement; const kind=seg.dataset.kind; const code=seg.dataset.code; const v=btn.dataset.v;
@@ -507,26 +608,48 @@ function wireNew(){
   const repAge=document.getElementById('rep-age');
   const repBl=document.getElementById('rep-bl');
   const repOut=document.getElementById('rep-out');
-  const refreshOut=()=>{repOut.textContent=buildReportText();};
+  const repClosing=document.getElementById('rep-closing');
+  const refreshOut=()=>{
+    repOut.textContent=buildReportText();
+    if(repClosing)repClosing.textContent=buildClosingText(scoreCalc().bad,state.report.pohovor,getEffectiveVerdict());
+  };
   function refreshAgeGate(){
-    const ageNum=parseInt(state.report.age,10);
-    const underage=Number.isFinite(ageNum)&&ageNum<16;
-    const locked=scoreCalc().bad>=3;
-    const forceFail=underage||locked;
+    const gate=getVerdictGate();
     const warn=document.getElementById('rep-age-warn');
-    if(warn)warn.style.display=underage?'block':'none';
+    if(warn)warn.style.display=gate.underage?'block':'none';
+    const incWarn=document.getElementById('rep-incomplete-warn');
+    if(incWarn){
+      incWarn.style.display=gate.incompleteMsg?'block':'none';
+      incWarn.textContent=gate.incompleteMsg?('⚠ '+gate.incompleteMsg):'';
+    }
     const passBtn=document.getElementById('rep-v-pass');
     const failBtn=document.getElementById('rep-v-fail');
-    if(passBtn)passBtn.disabled=forceFail;
-    if(forceFail && state.report.verdict==='PROŠEL'){
-      state.report.verdict='NEPROŠEL';
-      if(passBtn)passBtn.classList.remove('active');
-      if(failBtn){failBtn.classList.add('active');failBtn.classList.add('v-bad-btn');}
+    if(passBtn)passBtn.disabled=gate.passDisabled;
+    const effectiveVerdict=gate.forceFail?'NEPROŠEL':state.report.verdict;
+    if(passBtn)passBtn.classList.toggle('active',effectiveVerdict==='PROŠEL');
+    if(failBtn){
+      failBtn.classList.toggle('active',effectiveVerdict==='NEPROŠEL');
+      failBtn.classList.toggle('v-bad-btn',effectiveVerdict==='NEPROŠEL');
     }
     refreshOut();
   }
+  function checkAgeModal(){
+    const ageNum=parseInt(state.report.age,10);
+    const underage=Number.isFinite(ageNum)&&ageNum<16;
+    if(underage&&!ageModalShown){
+      ageModalShown=true;
+      showAgeModal(ageNum);
+    }else if(!underage&&ageModalShown){
+      ageModalShown=false;
+      closeAgeModal();
+    }
+  }
   if(repDiscord)repDiscord.oninput=e=>{state.report.discordId=e.target.value;refreshOut();};
-  if(repAge)repAge.oninput=e=>{state.report.age=e.target.value;refreshAgeGate();};
+  if(repAge){
+    repAge.oninput=e=>{state.report.age=e.target.value;refreshAgeGate();};
+    repAge.onblur=checkAgeModal;
+    repAge.onkeydown=e=>{if(e.key==='Enter'){e.target.blur();}};
+  }
   if(repBl)repBl.onchange=e=>{state.report.bl=e.target.checked;refreshOut();};
   document.querySelectorAll('.pickseg').forEach(seg=>{
     seg.querySelectorAll('button').forEach(btn=>{
@@ -537,9 +660,7 @@ function wireNew(){
       };
     });
   });
-  const copyBtn=document.getElementById('rep-copy');
-  if(copyBtn)copyBtn.onclick=async()=>{
-    const text=buildReportText();
+  async function copyText(text,btn){
     try{
       await navigator.clipboard.writeText(text);
     }catch(e){
@@ -548,23 +669,31 @@ function wireNew(){
       try{document.execCommand('copy');}catch(e2){}
       document.body.removeChild(ta);
     }
-    copyBtn.textContent='Zkopírováno ✓';
-    copyBtn.classList.add('done');
-    setTimeout(()=>{copyBtn.textContent='Kopírovat text';copyBtn.classList.remove('done');},1500);
-  };
+    btn.textContent='Zkopírováno ✓';
+    btn.classList.add('done');
+    setTimeout(()=>{btn.textContent='Kopírovat text';btn.classList.remove('done');},1500);
+  }
+  const copyBtn=document.getElementById('rep-copy');
+  if(copyBtn)copyBtn.onclick=()=>copyText(buildReportText(),copyBtn);
+  const closingCopyBtn=document.getElementById('rep-closing-copy');
+  if(closingCopyBtn)closingCopyBtn.onclick=()=>copyText(buildClosingText(scoreCalc().bad,state.report.pohovor,getEffectiveVerdict()),closingCopyBtn);
 }
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 document.getElementById('newBtn').onclick=()=>{
-  state={candidate:'',interviewer:'',ans:{},note:{},sans:{},snote:{},report:emptyReport()};
+  state={ans:{},note:{},sans:{},snote:{},report:emptyReport()};
   sectionOpen={SIT:true}; answerOpen={};
   mistakeModalShown=false;
   closeMistakeModal();
-  renderNew();
+  ageModalShown=false;
+  closeAgeModal();
+  checklist={};
+  VIEW='checklist';
+  renderChecklist();
 };
 
-renderNew();
+renderChecklist();
 </script>
 </body>
 </html>
