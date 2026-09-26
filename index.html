@@ -171,7 +171,7 @@ const SECTIONS = [
 ]],
 ["4. Komunikace",[
 ["4.1", "OOC jen na Discordu", "Kde má probíhat veškerá mimoherní (OOC) komunikace mezi hráči?", "Výhradně na Discordu."],
-["4.2", "Tickety na webu nebo Discordu", "Kde se podávají a řeší admin tickety?", "Jen přes ticket systém na oficiálním webu nebo Ticket Discordu."],
+["4.2", "Tickety na webu nebo Ticket Discordu", "Kde se podávají a řeší admin tickety?", "Jen přes ticket systém na oficiálním webu nebo Ticket Discordu."],
 ["4.3", "Spam zákaz", "Hráč opakovaně posílá stejnou nebo nerelevantní zprávu a zahlcuje tím kanál. Je to v pořádku?", "Ne – jde o zakázaný spam, tedy zahlcování kanálů a opakované posílání stejných/nerelevantních zpráv."],
 ["4.4", "Dohled nad A-Teamem", "Máš podezření, že člen A-Teamu zneužívá své pravomoci. Co můžeš udělat?", "A-Team podléhá vedení serveru, takže podezření na zneužití pravomocí lze anonymně nahlásit přes k tomu určený ticket."],
 ["4.5", "Nahrávání bez souhlasu", "Chceš nahrát rozhovor s jiným hráčem bez jeho souhlasu jako důkaz do ticketu. Je to výjimečně možné?", "Ano, ale pouze jako důkazní materiál pro řešení ticketu – jinak je nahrávání bez výslovného souhlasu všech zúčastněných přísně zakázáno."],
@@ -371,7 +371,7 @@ function buildClosingText(bad,pohovor,verdict){
   if(pohovor==='3'){
     return `Aktuálně si překročil počet chyb (${bad}) a whitelistem jsi neprošel, dostáváš tedy BL, který je permanentní. Měj hezky zbytek dne, Ahoj.`;
   }
-  return `Aktuálně jsi překročil počet chyb (${bad}) a whitelistem jsi neprošel, nárok na další pokus máš až následující den, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné zbytek dne, Ahoj.`;
+  return `Aktuálně jsi překročil počet chyb (${bad}) a whitelistem jsi neprošel, nárok na další pokus máš až následující den, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné zbytek dne.`;
 }
 
 function buildReportTextFor(r,bad,wrongDescs){
@@ -408,7 +408,7 @@ function scoreCalc(){
 
 function verdictFor(pct,asked,situAsked,classicAsked){
   if(asked<10)return {cls:'v-none',label:'Nedostatek odpovědí'};
-  if((classicAsked||0)<14)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 10)'};
+  if((classicAsked||0)<10)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 10)'};
   if((situAsked||0)<2)return {cls:'v-none',label:'Nedostatek situačních otázek (min. 2)'};
   if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
   if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
