@@ -353,8 +353,8 @@ function getVerdictGate(){
   const locked=sc.bad>=3;
   const forceFail=underage||locked;
   let incompleteMsg='';
-  if(sc.situAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit situačních otázek (min. 2).';
-  else if(sc.classicAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit klasických otázek (min. 2).';
+  if(sc.classicAsked<8)incompleteMsg='Pohovor nelze dokončit – není splněn limit klasických otázek (min. 8).';
+  else if(sc.situAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit situačních otázek (min. 2).';
   const passDisabled=forceFail||!!incompleteMsg;
   return {underage,forceFail,incompleteMsg,passDisabled};
 }
@@ -369,9 +369,9 @@ function buildClosingText(bad,pohovor,verdict){
     return `Aktuálně jsi prošel wl s ${bad} chybami, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné RP.`;
   }
   if(pohovor==='3'){
-    return `Aktuálně si překročil počet chyb (${bad}) a whitelistem jsi neprošel, dostáváš tedy BL, který je permanentní. Měj hezky zbytek dne, AHOJ.`;
+    return `Aktuálně si překročil počet chyb (${bad}) a whitelistem jsi neprošel, dostáváš tedy BL, který je permanentní. Měj hezky zbytek dne, Ahoj.`;
   }
-  return `Aktuálně jsi překročil počet chyb (${bad}) a whitelistem jsi neprošel, nárok na další pokus máš až následující den, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné zbytek dne.`;
+  return `Aktuálně jsi překročil počet chyb (${bad}) a whitelistem jsi neprošel, nárok na další pokus máš až následující den, pokud nemáš dalších otázek můžeš tuto roomku opustit a přeji ti příjemné zbytek dne, Ahoj.`;
 }
 
 function buildReportTextFor(r,bad,wrongDescs){
@@ -386,7 +386,7 @@ function buildReportTextFor(r,bad,wrongDescs){
   if(wrongDescs&&wrongDescs.length)parts.push(wrongDescs.join(', '));
   parts.push(verdict);
   let text=parts.join(' - ');
-  if(r.bl)text+=' + UDĚLENÉ BLACKLIST';
+  if(r.bl)text+=' + UDĚLEN BLACKLIST';
   return text;
 }
 function getWrongDescs(){
@@ -408,8 +408,8 @@ function scoreCalc(){
 
 function verdictFor(pct,asked,situAsked,classicAsked){
   if(asked<10)return {cls:'v-none',label:'Nedostatek odpovědí'};
+  if((classicAsked||0)<14)return {cls:'v-none',label:'Nedostatek klasických otázek (min. 14)'};
   if((situAsked||0)<2)return {cls:'v-none',label:'Nedostatek situačních otázek (min. 2)'};
-  if((classicAsked||0)<2)return {cls:'v-none',label:'Nedostatek klasických otázek'};
   if(pct>=85)return {cls:'v-ok',label:'Doporučeno přijmout'};
   if(pct>=65)return {cls:'v-mid',label:'Podmínečně / na zvážení'};
   return {cls:'v-bad',label:'Nedoporučeno'};
