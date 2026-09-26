@@ -353,7 +353,7 @@ function getVerdictGate(){
   const locked=sc.bad>=3;
   const forceFail=underage||locked;
   let incompleteMsg='';
-  if(sc.classicAsked<8)incompleteMsg='Pohovor nelze dokončit – není splněn limit klasických otázek (min. 8).';
+  if(sc.classicAsked<10)incompleteMsg='Pohovor nelze dokončit – není splněn limit klasických otázek (min. 10).';
   else if(sc.situAsked<2)incompleteMsg='Pohovor nelze dokončit – není splněn limit situačních otázek (min. 2).';
   const passDisabled=forceFail||!!incompleteMsg;
   return {underage,forceFail,incompleteMsg,passDisabled};
